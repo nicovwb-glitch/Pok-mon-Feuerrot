@@ -356,6 +356,46 @@
 .nachpruefung dt { color: rgba(255,255,255,.48); font-size: 8px; font-weight: 800; text-transform: uppercase; }
 .nachpruefung dd { margin: 4px 0 0; font: 700 13px 'Outfit'; }
 
+.regeln-seite { min-height: calc(100vh - 64px); background: #efeee7; }
+.regeln-kopf { min-height: 440px; padding: 48px max(24px, calc((100% - 1120px)/2)) 58px; background: radial-gradient(circle at 80% 15%, rgba(220,68,54,.22), transparent 30%), linear-gradient(120deg, #17211c 0 55%, #3c1e1c 100%); color: #fff; position: relative; overflow: hidden; }
+.regeln-kopf::after { content: '§'; position: absolute; right: 7%; bottom: -120px; color: rgba(255,255,255,.045); font: 800 430px/1 'Outfit'; transform: rotate(-8deg); }
+.regeln-kopf .zurueck { position: relative; z-index: 2; border: 0; background: transparent; color: rgba(255,255,255,.65); padding: 0; margin-bottom: 46px; cursor: pointer; font-weight: 700; }
+.regeln-kopf h1 { position: relative; z-index: 1; max-width: 830px; margin: 15px 0 17px; font: 800 clamp(48px, 7vw, 84px)/.95 'Outfit'; letter-spacing: -.055em; }
+.regeln-kopf > p { position: relative; z-index: 1; max-width: 680px; margin: 0; color: rgba(255,255,255,.67); font-size: 17px; line-height: 1.6; }
+.regeln-kopf__werte { position: absolute; z-index: 2; right: max(24px, calc((100% - 1120px)/2)); bottom: 58px; display: flex; gap: 8px; }
+.regeln-kopf__werte div { width: 112px; min-height: 78px; display: flex; flex-direction: column; justify-content: center; padding: 12px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.06); }
+.regeln-kopf__werte strong { color: #f4c85d; font: 800 26px 'Outfit'; }
+.regeln-kopf__werte span { color: rgba(255,255,255,.5); font-size: 8px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.regeln-inhalt { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 34px 0 90px; }
+.regeln-sprungmarken { position: sticky; z-index: 15; top: 12px; display: flex; align-items: center; gap: 18px; margin-bottom: 22px; padding: 11px 14px; border: 1px solid var(--linie); background: rgba(255,253,247,.94); box-shadow: 0 8px 25px rgba(23,33,28,.08); backdrop-filter: blur(8px); }
+.regeln-sprungmarken > span { color: var(--grau); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.regeln-sprungmarken > div { flex: 1; display: grid; grid-template-columns: repeat(16, 1fr); gap: 4px; }
+.regeln-sprungmarken button { aspect-ratio: 1.2; border: 0; background: #e9e7df; color: var(--grau); cursor: pointer; font: 700 9px 'Outfit'; }
+.regeln-sprungmarken button:hover { background: var(--rot); color: #fff; }
+.regeln-einleitung { display: grid; grid-template-columns: 125px 1fr; align-items: center; gap: 25px; margin-bottom: 22px; padding: 23px 28px; background: #f5df9d; border-left: 5px solid #c88c22; }
+.regeln-einleitung span { color: #7f5312; font-size: 9px; font-weight: 900; letter-spacing: .12em; }
+.regeln-einleitung p { margin: 0; color: #57441f; font-size: 13px; line-height: 1.65; }
+.regeln-raster { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+.regel-karte { scroll-margin-top: 90px; min-height: 235px; padding: 25px; border: 1px solid var(--linie); background: var(--papier); position: relative; overflow: hidden; }
+.regel-karte::after { content: ''; position: absolute; width: 110px; height: 110px; right: -55px; bottom: -55px; border: 1px solid rgba(23,33,28,.06); border-radius: 50%; }
+.regel-karte--wichtig { grid-column: 1 / -1; min-height: 0; border-left: 6px solid var(--rot); background: linear-gradient(100deg, #fffdf7, #f7eee8); }
+.regel-karte > header { display: grid; grid-template-columns: 40px 48px 1fr; align-items: center; gap: 11px; margin-bottom: 18px; }
+.regel-nummer { align-self: stretch; display: grid; place-items: center; border-right: 1px solid var(--linie); color: var(--rot); font: 800 12px 'Outfit'; }
+.regel-symbol { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: #e9e8e1; color: #17211c; font: 700 22px 'Outfit'; }
+.regel-karte--wichtig .regel-symbol { background: var(--rot); color: #fff; }
+.regel-karte header small { color: var(--rot); font-size: 8px; font-weight: 900; letter-spacing: .11em; }
+.regel-karte h2 { margin: 3px 0 0; font: 700 22px 'Outfit'; letter-spacing: -.025em; }
+.regel-karte > p { margin: 0; color: #414943; font-size: 13px; line-height: 1.7; }
+.regel-karte ul { display: grid; gap: 8px; margin: 17px 0 0; padding: 16px 0 0; border-top: 1px solid var(--linie); list-style: none; }
+.regel-karte li { position: relative; padding-left: 20px; color: var(--grau); font-size: 11px; line-height: 1.6; }
+.regel-karte li::before { content: '→'; position: absolute; left: 0; color: var(--rot); font-weight: 900; }
+.regel-karte--wichtig ul { grid-template-columns: repeat(2, minmax(0,1fr)); column-gap: 25px; }
+.regeln-abschluss { margin-top: 25px; min-height: 130px; display: flex; align-items: center; justify-content: center; gap: 20px; padding: 25px; background: #17211c; color: #fff; text-align: left; }
+.regeln-abschluss > span { width: 65px; height: 65px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; color: #f4c85d; font-size: 30px; }
+.regeln-abschluss div { display: flex; flex-direction: column; }
+.regeln-abschluss small { color: #f4c85d; font-size: 8px; font-weight: 900; letter-spacing: .13em; }
+.regeln-abschluss strong { max-width: 640px; margin-top: 5px; font: 700 24px 'Outfit'; }
+
 .modal-offen { overflow: hidden; }
 .modal-hintergrund { position: fixed; inset: 0; z-index: 100; background: rgba(8,19,14,.76); backdrop-filter: blur(7px); display: grid; place-items: center; padding: 24px; }
 .detailfenster { width: min(1050px, 100%); max-height: calc(100vh - 48px); overflow-y: auto; background: var(--papier); box-shadow: 0 30px 90px rgba(0,0,0,.4); position: relative; }
@@ -412,6 +452,86 @@
 .ladeball { width: 54px; height: 54px; border: 6px solid var(--tinte); border-radius: 50%; background: linear-gradient(var(--rot) 0 44%, var(--tinte) 44% 56%, #fff 56%); animation: drehen 1.2s infinite ease-in-out; }
 @keyframes drehen { to { transform: rotate(360deg); } }
 
+.abenteuer-seite { min-height: calc(100vh - 64px); background: #efeee6; }
+.abenteuer-kopf { padding: 38px max(24px, calc((100% - 1120px)/2)) 42px; background: #17211c; color: #fff; position: relative; overflow: hidden; }
+.abenteuer-kopf::after { content: 'KANTO'; position: absolute; right: 3%; bottom: -28px; color: rgba(255,255,255,.035); font: 800 clamp(90px, 14vw, 180px)/1 'Outfit'; }
+.abenteuer-kopf .zurueck { position: relative; z-index: 1; margin: 0 0 30px; padding: 0; border: 0; background: transparent; color: rgba(255,255,255,.65); cursor: pointer; font-weight: 700; }
+.abenteuer-kopf h1 { position: relative; z-index: 1; margin: 12px 0 8px; font: 800 clamp(42px, 6vw, 68px)/1 'Outfit'; letter-spacing: -.05em; }
+.abenteuer-kopf > p { position: relative; z-index: 1; max-width: 720px; margin: 0; color: rgba(255,255,255,.65); line-height: 1.55; }
+.abenteuer-inhalt { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0 80px; }
+.abenteuer-gesamt { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 28px; margin-bottom: 16px; padding: 14px 18px; border: 1px solid var(--linie); background: var(--papier); }
+.abenteuer-gesamt > div { display: flex; flex-direction: column; }
+.abenteuer-gesamt small { color: var(--rot); font-size: 8px; font-weight: 800; letter-spacing: .12em; }
+.abenteuer-gesamt strong { margin-top: 3px; font: 700 17px 'Outfit'; }
+.abenteuer-gesamt > span, .etappe-fortschritt > span { height: 8px; overflow: hidden; background: #dddcd5; }
+.abenteuer-gesamt i, .etappe-fortschritt i { display: block; height: 100%; background: linear-gradient(90deg, var(--rot), #ef9a55); transition: width .25s ease; }
+.etappen-leiste { display: grid; grid-template-columns: repeat(13, 1fr); gap: 5px; margin-bottom: 16px; }
+.etappen-leiste button { min-width: 0; min-height: 58px; padding: 6px 2px; border: 1px solid var(--linie); background: rgba(255,255,255,.58); color: var(--grau); cursor: pointer; }
+.etappen-leiste button:hover, .etappen-leiste button.aktiv { border-color: var(--rot); background: var(--papier); color: var(--tinte); }
+.etappen-leiste button.aktiv { box-shadow: inset 0 -3px var(--rot); }
+.etappen-leiste button.fertig span { background: #378b61; color: #fff; }
+.etappen-leiste span { width: 24px; height: 24px; margin: 0 auto 4px; display: grid; place-items: center; border-radius: 50%; background: #deddd6; font: 800 9px 'Outfit'; }
+.etappen-leiste small { display: block; overflow: hidden; font-size: 7px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.etappe-karte { border: 1px solid var(--linie); background: var(--papier); box-shadow: 0 14px 40px rgba(31,47,39,.08); }
+.etappe-karte > header { display: grid; grid-template-columns: 1fr 210px; gap: 30px; padding: 28px 32px; border-bottom: 1px solid var(--linie); }
+.etappe-karte > header > div:first-child > span { color: var(--rot); font-size: 9px; font-weight: 800; letter-spacing: .13em; }
+.etappe-karte h2 { margin: 6px 0; font: 800 clamp(28px, 4vw, 42px)/1 'Outfit'; letter-spacing: -.04em; }
+.etappe-karte header p { margin: 0; color: var(--grau); font-size: 13px; }
+.etappe-cap { display: flex; flex-direction: column; justify-content: center; padding-left: 24px; border-left: 1px solid var(--linie); }
+.etappe-cap small { color: var(--grau); font-size: 8px; font-weight: 800; letter-spacing: .12em; }
+.etappe-cap strong { margin: 3px 0 8px; color: var(--rot); font: 800 30px 'Outfit'; }
+.etappe-cap button { padding: 8px; border: 1px solid var(--linie); background: #f0efe9; cursor: pointer; color: var(--tinte); font-size: 8px; font-weight: 800; }
+.etappe-fortschritt { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 18px; padding: 16px 32px 0; }
+.etappe-fortschritt strong { color: var(--grau); font-size: 10px; }
+.etappe-checkliste { display: grid; gap: 8px; padding: 18px 32px 28px; }
+.etappe-punkt { display: grid; grid-template-columns: 1fr auto; align-items: center; min-height: 62px; border: 1px solid var(--linie); background: #f7f6f0; transition: .18s ease; }
+.etappe-punkt:hover { border-color: #b9b9b1; transform: translateX(3px); }
+.etappe-checkliste label { min-width: 0; min-height: 60px; display: grid; grid-template-columns: 54px 1fr; align-items: center; padding: 9px 8px 9px 9px; cursor: pointer; }
+.etappe-checkliste input { position: absolute; opacity: 0; pointer-events: none; }
+.etappe-checkliste label > span { display: grid; grid-template-columns: 28px; place-items: center; }
+.etappe-checkliste label > span i { grid-area: 1/1; width: 28px; height: 28px; display: grid; place-items: center; border: 2px solid #c7c6bf; border-radius: 50%; color: transparent; font-style: normal; }
+.etappe-checkliste label > span b { grid-area: 1/1; color: #8b8c87; font: 800 8px 'Outfit'; }
+.etappe-checkliste p { margin: 0; font-size: 13px; line-height: 1.45; }
+.etappe-punkt.erledigt { border-color: #b8d7c7; background: #edf6f1; }
+.etappe-punkt.erledigt label > span i { border-color: #378b61; background: #378b61; color: #fff; }
+.etappe-punkt.erledigt label > span b { display: none; }
+.etappe-punkt.erledigt label p { color: #6f7973; text-decoration: line-through; }
+.etappe-punkt__hilfen { display: flex; gap: 5px; padding: 0 12px 0 5px; }
+.etappe-punkt__hilfen button { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid #c9c8c0; border-radius: 50%; background: #fff; color: var(--tinte); cursor: pointer; font: 800 14px 'Outfit'; transition: .16s ease; }
+.etappe-punkt__hilfen button:hover { border-color: var(--rot); background: var(--rot); color: #fff; transform: translateY(-2px); }
+.etappe-karte-knopf { font-size: 17px !important; }
+.etappe-navigation { display: flex; justify-content: space-between; gap: 10px; padding: 18px 32px; border-top: 1px solid var(--linie); background: #ecebe4; }
+.etappe-navigation button { min-width: 175px; padding: 11px 14px; border: 0; background: #17211c; color: #fff; cursor: pointer; font-size: 10px; font-weight: 800; }
+.etappe-navigation button:disabled { opacity: .25; cursor: not-allowed; }
+.abenteuer-popup { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 20px; background: rgba(14,24,19,.78); backdrop-filter: blur(5px); }
+.abenteuer-popup > section { width: min(720px, 100%); max-height: min(820px, calc(100vh - 40px)); overflow-y: auto; position: relative; border-top: 5px solid var(--rot); background: var(--papier); box-shadow: 0 25px 80px rgba(0,0,0,.35); }
+.abenteuer-popup__schliessen { position: absolute; z-index: 2; top: 13px; right: 15px; width: 36px; height: 36px; border: 1px solid rgba(255,255,255,.25); border-radius: 50%; background: rgba(255,255,255,.1); color: #fff; cursor: pointer; font-size: 24px; }
+.abenteuer-popup > section > header { padding: 26px 64px 23px 28px; background: #17211c; color: #fff; }
+.abenteuer-popup > section > header span { color: #f4c85d; font-size: 8px; font-weight: 800; letter-spacing: .13em; }
+.abenteuer-popup > section > header h2 { margin: 6px 0 4px; font: 800 clamp(28px, 5vw, 42px)/1 'Outfit'; letter-spacing: -.04em; }
+.abenteuer-popup > section > header p { margin: 0; color: rgba(255,255,255,.6); font-size: 12px; }
+.abenteuer-popup__wechsel { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--linie); }
+.abenteuer-popup__wechsel button { height: 46px; border: 0; background: #e9e8e1; color: var(--grau); cursor: pointer; font-size: 10px; font-weight: 800; }
+.abenteuer-popup__wechsel button + button { border-left: 1px solid var(--linie); }
+.abenteuer-popup__wechsel button.aktiv { background: var(--papier); color: var(--rot); box-shadow: inset 0 -3px var(--rot); }
+.abenteuer-popup__info { padding: 25px 28px 30px; }
+.abenteuer-popup__info > p { margin: 0 0 20px; color: var(--grau); font-size: 14px; line-height: 1.55; }
+.abenteuer-popup__info ol { margin: 0; padding: 0; list-style: none; counter-reset: weg; display: grid; gap: 9px; }
+.abenteuer-popup__info li { counter-increment: weg; display: grid; grid-template-columns: 34px 1fr; align-items: center; min-height: 47px; padding: 8px 12px 8px 7px; background: #f0efe9; font-size: 12px; line-height: 1.45; }
+.abenteuer-popup__info li::before { content: counter(weg); width: 27px; height: 27px; display: grid; place-items: center; border-radius: 50%; background: var(--rot); color: #fff; font: 800 9px 'Outfit'; }
+.abenteuer-popup__info aside { display: grid; grid-template-columns: auto 1fr; gap: 12px; margin-top: 16px; padding: 13px; border-left: 4px solid #e1a12d; background: #fff0cf; color: #70551e; font-size: 11px; line-height: 1.45; }
+.kanto-karte { padding: 24px 28px 30px; }
+.kanto-karte svg { width: 100%; height: auto; display: block; border: 1px solid #a7c8cc; }
+.kanto-karte svg text { fill: #284b43; font: 700 11px 'Outfit'; paint-order: stroke; stroke: #eaf1d7; stroke-width: 4px; }
+.karten-marker { color: var(--rot); }
+.karten-marker circle:first-child { fill: currentColor; opacity: .22; animation: marker-puls 1.7s infinite ease-out; transform-box: fill-box; transform-origin: center; }
+.karten-marker circle:nth-child(2), .karten-marker path { fill: var(--rot); stroke: #fff; stroke-width: 4px; }
+@keyframes marker-puls { 50% { transform: scale(1.45); opacity: .08; } }
+.kanto-karte > div { display: flex; flex-direction: column; margin-top: 15px; }
+.kanto-karte > div span { color: var(--rot); font-size: 8px; font-weight: 800; letter-spacing: .12em; }
+.kanto-karte > div strong { margin-top: 3px; font: 700 20px 'Outfit'; }
+.kanto-karte > div small { margin-top: 5px; color: var(--grau); font-size: 10px; }
+
 footer { padding: 16px 20px; background: #17211c; color: rgba(255,255,255,.5); text-align: center; font-size: 10px; }
 footer p { margin: 0; }
 
@@ -434,6 +554,10 @@ footer p { margin: 0; }
   .berater-teams { grid-template-columns: 1fr; }
   .beste-empfehlung { grid-template-columns: 1fr; }
   .beste-empfehlung__pokemon { padding-top: 40px; }
+  .regeln-kopf__werte { position: relative; right: auto; bottom: auto; margin-top: 30px; }
+  .regeln-sprungmarken { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .regeln-sprungmarken > div { width: 100%; grid-template-columns: repeat(8, 1fr); }
+  .etappen-leiste { grid-template-columns: repeat(7, 1fr); }
 }
 
 @media (max-width: 650px) {
@@ -537,6 +661,47 @@ footer p { margin: 0; }
   .nachpruefung__bild img { width: 150px; height: 150px; }
   .nachpruefung > div:last-child { padding: 25px 18px; }
   .nachpruefung dl { grid-template-columns: 1fr; }
+  .regeln-seite { min-height: calc(100vh - 66px); }
+  .regeln-kopf { min-height: 0; padding: 36px 18px 42px; }
+  .regeln-kopf .zurueck { margin-bottom: 34px; }
+  .regeln-kopf h1 { font-size: 45px; }
+  .regeln-kopf > p { font-size: 14px; }
+  .regeln-kopf__werte { gap: 5px; }
+  .regeln-kopf__werte div { width: auto; flex: 1; min-height: 65px; padding: 8px; }
+  .regeln-kopf__werte strong { font-size: 21px; }
+  .regeln-inhalt { width: min(100% - 24px, 1120px); padding: 20px 0 55px; }
+  .regeln-sprungmarken { top: 5px; padding: 9px; }
+  .regeln-sprungmarken > div { grid-template-columns: repeat(8, 1fr); }
+  .regeln-einleitung { grid-template-columns: 1fr; gap: 8px; padding: 18px; }
+  .regeln-raster { grid-template-columns: 1fr; gap: 10px; }
+  .regel-karte, .regel-karte--wichtig { grid-column: auto; min-height: 0; padding: 20px 17px; }
+  .regel-karte > header { grid-template-columns: 32px 40px 1fr; gap: 8px; }
+  .regel-symbol { width: 38px; height: 38px; font-size: 18px; }
+  .regel-karte h2 { font-size: 19px; }
+  .regel-karte--wichtig ul { grid-template-columns: 1fr; }
+  .regeln-abschluss { align-items: center; flex-direction: column; text-align: center; }
+  .regeln-abschluss strong { font-size: 20px; }
+  .abenteuer-kopf { padding: 34px 18px 38px; }
+  .abenteuer-kopf .zurueck { margin-bottom: 28px; }
+  .abenteuer-inhalt { width: min(100% - 24px, 1120px); padding: 18px 0 55px; }
+  .abenteuer-gesamt { grid-template-columns: 1fr; gap: 10px; }
+  .etappen-leiste { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .etappe-karte > header { grid-template-columns: 1fr; gap: 18px; padding: 22px 17px; }
+  .etappe-cap { padding: 14px 0 0; border-left: 0; border-top: 1px solid var(--linie); }
+  .etappe-fortschritt { padding: 14px 17px 0; }
+  .etappe-checkliste { padding: 15px 17px 22px; }
+  .etappe-checkliste label { grid-template-columns: 42px 1fr; padding-right: 7px; }
+  .etappe-punkt__hilfen { flex-direction: column; padding: 6px 8px 6px 2px; }
+  .etappe-punkt__hilfen button { width: 30px; height: 30px; }
+  .etappe-navigation { padding: 14px 17px; }
+  .etappe-navigation button { min-width: 0; flex: 1; font-size: 8px; }
+  .abenteuer-popup { padding: 10px; }
+  .abenteuer-popup > section { max-height: calc(100vh - 20px); }
+  .abenteuer-popup > section > header { padding: 23px 52px 19px 18px; }
+  .abenteuer-popup__schliessen { top: 10px; right: 10px; }
+  .abenteuer-popup__info, .kanto-karte { padding: 18px; }
+  .abenteuer-popup__info aside { grid-template-columns: 1fr; gap: 4px; }
+  .kanto-karte svg text { font-size: 9px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

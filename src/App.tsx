@@ -455,10 +455,14 @@ function Startseite({
   pokedexOeffnen,
   teamplanerOeffnen,
   kampfberaterOeffnen,
+  regelnOeffnen,
+  abenteuerplanOeffnen,
 }: {
   pokedexOeffnen: () => void
   teamplanerOeffnen: () => void
   kampfberaterOeffnen: () => void
+  regelnOeffnen: () => void
+  abenteuerplanOeffnen: () => void
 }) {
   const [fortschritt, setFortschritt] = useState<number | null>(() => {
     const gespeichert = localStorage.getItem('feuerrot-arenen-fortschritt')
@@ -496,9 +500,9 @@ function Startseite({
       aktiv: true,
       aktion: kampfberaterOeffnen,
     },
-    { titel: 'Arenen', text: 'Orden, Leiter und empfohlene Typen', symbol: '◆' },
-    { titel: 'Orte', text: 'Routen, Städte und wichtige Fundorte', symbol: '⌖' },
-    { titel: 'Items', text: 'Fundorte und Wirkung wichtiger Items', symbol: '▣' },
+    { titel: 'Abenteuerplan', text: 'Schritt für Schritt von Arena zu Arena', symbol: '⌖', aktiv: true, aktion: abenteuerplanOeffnen },
+    { titel: 'Regeln', text: 'Das vollständige SoulLink-Regelwerk', symbol: '§', aktiv: true, aktion: regelnOeffnen },
+    { titel: 'Weiteres Werkzeug', text: 'Dieser Bereich wird später gemeinsam geplant', symbol: '…' },
   ]
 
   return (
@@ -523,7 +527,7 @@ function Startseite({
             <span className="ueberzeile">ABENTEUER-WERKZEUGE</span>
             <h2 id="bereiche-titel">Wähle einen Bereich</h2>
           </div>
-          <span className="status"><i /> 3 von 6 verfügbar</span>
+          <span className="status"><i /> 5 von 6 verfügbar</span>
         </div>
 
         <section className="arenen-fortschritt" aria-label="Arenen-Fortschritt und Level-Caps">
@@ -1837,6 +1841,599 @@ function Kampfberater({
   )
 }
 
+type AbenteuerEtappe = {
+  name: string
+  ziel: string
+  cap: string
+  fokus: string
+  punkte: string[]
+}
+
+const ABENTEUER_ETAPPEN: AbenteuerEtappe[] = [
+  { name: 'Arena 1', ziel: 'Rocko', cap: '14 / 12', fokus: 'Von Alabastia nach Marmoria City', punkte: [
+    'Randomisierten Starter wählen, benennen und mit den Startern der Partner verbinden.',
+    'Die ersten Pokébälle erhalten – ab diesem Moment beginnt die Challenge.',
+    'Erstbegegnungen auf Route 1, Route 2, Route 22 und im Vertania-Wald gemeinsam klären.',
+    'Ein Cap-Pokémon bis Level 14 bestimmen; alle anderen höchstens bis Level 12 trainieren.',
+    'Team heilen, getragene Items prüfen und Rocko gemeinsam besiegen.',
+  ] },
+  { name: 'Arena 2', ziel: 'Misty', cap: '21 / 19', fokus: 'Mondberg und Azuria City', punkte: [
+    'Erstbegegnungen auf Route 3 und im Mondberg durchführen und sofort verbinden.',
+    'Im Mondberg ein Fossil wählen; benutzen dürft ihr es später nur gemeinsam mit Partner-Fossilien.',
+    'Den Rivalen in Azuria City besiegen und die Begegnungen auf Route 24 und 25 prüfen.',
+    'Ein Cap-Pokémon bis Level 21 bestimmen; alle anderen höchstens bis Level 19 trainieren.',
+    'Wasser-Schwächen absichern und Misty besiegen.',
+  ] },
+  { name: 'Arena 3', ziel: 'Major Bob', cap: '24 / 22', fokus: 'Orania City und die M.S. Anne', punkte: [
+    'Neue Erstbegegnungen auf Route 5, Route 6 und Route 11 eintragen.',
+    'Die M.S. Anne vollständig vorbereiten, den Rivalen besiegen und Zerschneider erhalten.',
+    'Die Digda-Höhle nur betreten, wenn alle Partner für ihre Begegnung bereit sind.',
+    'Ein Cap-Pokémon bis Level 24 bestimmen; alle anderen höchstens bis Level 22 trainieren.',
+    'Boden-Attacken oder eine Elektro-Resistenz vorbereiten und Major Bob besiegen.',
+  ] },
+  { name: 'Arena 4', ziel: 'Erika', cap: '29 / 27', fokus: 'Felstunnel, Lavandia und Prismania City', punkte: [
+    'Erstbegegnungen auf Route 9, Route 10 und im Felstunnel gemeinsam durchführen.',
+    'In Lavandia den Rivalen beachten; den Pokémon-Turm erst mit dem Silph Scope abschließen.',
+    'Über Route 8 nach Prismania City reisen und den Rocket-Unterschlupf abschließen.',
+    'Ein Cap-Pokémon bis Level 29 bestimmen; alle anderen höchstens bis Level 27 trainieren.',
+    'Feuer-, Flug-, Käfer- oder Eis-Attacken vorbereiten und Erika besiegen.',
+  ] },
+  { name: 'Arena 5', ziel: 'Koga', cap: '43 / 41', fokus: 'Pokémon-Turm, Fuchsania City und Safari-Zone', punkte: [
+    'Mit dem Silph Scope zum Pokémon-Turm zurückkehren und die Pokéflöte erhalten.',
+    'Den Weg über Route 12–15 oder den Radweg Route 16–18 samt Erstbegegnungen abstimmen.',
+    'In der Safari-Zone Surfer und die Goldzähne holen; Fangregeln vorher gemeinsam festlegen.',
+    'Ein Cap-Pokémon bis Level 43 bestimmen; alle anderen höchstens bis Level 41 trainieren.',
+    'Psycho- oder Boden-Attacken und Schutz vor Gift vorbereiten und Koga besiegen.',
+  ] },
+  { name: 'Arena 6', ziel: 'Sabrina', cap: '43 / 41', fokus: 'Saffronia City und Silph Co.', punkte: [
+    'Saffronia City öffnen und die Silph Co. nur mit einem vollständig erlaubten Team betreten.',
+    'Den Rivalen in der Silph Co. einplanen und Lapras als geschenktes Pokémon abstimmen.',
+    'Giovanni besiegen, den Meisterball sichern und keine Cap-Verstöße beim Umbau des Teams erzeugen.',
+    'Ein Cap-Pokémon bis Level 43 bestimmen; alle anderen höchstens bis Level 41 lassen.',
+    'Starke physische Angreifer sowie Käfer-, Geist- oder Unlicht-Attacken vorbereiten und Sabrina besiegen.',
+  ] },
+  { name: 'Arena 7', ziel: 'Pyro', cap: '47 / 45', fokus: 'Seeschauminseln und Zinnoberinsel', punkte: [
+    'Surfer-Strecken und Erstbegegnungen auf Route 19, Route 20 und Route 21 abstimmen.',
+    'Die Seeschauminseln optional gemeinsam erkunden und statische Begegnungen vorher klären.',
+    'Fossilien nur wiederbeleben, wenn alle Partner ein erlaubtes Fossil verwenden können.',
+    'Den Geheimschlüssel im Pokémon-Haus finden und auf Level 47 / 45 trainieren.',
+    'Wasser-, Boden- oder Gesteins-Attacken vorbereiten und Pyro besiegen.',
+  ] },
+  { name: 'Arena 8', ziel: 'Giovanni', cap: '50 / 48', fokus: 'Eiland-Abstecher und Vertania City', punkte: [
+    'Den Eiland-Abstecher mit Bill abschließen und neue Gebiete getrennt dokumentieren.',
+    'Alle sieben bisherigen Seelenverbindungen, Grab-Boxen und erlaubten PC-Tausche kontrollieren.',
+    'Die Arena von Vertania City öffnen und ein stabiles Team gegen Boden-Pokémon zusammenstellen.',
+    'Ein Cap-Pokémon bis Level 50 bestimmen; alle anderen höchstens bis Level 48 trainieren.',
+    'Giovanni besiegen und anschließend den Rivalenkampf auf Route 22 vorbereiten.',
+  ] },
+  { name: 'Top 4 · Kampf 1', ziel: 'Lorelei', cap: '54 / 52', fokus: 'Siegesstraße und Indigo-Plateau', punkte: [
+    'Route 23 und die Siegesstraße samt letzter regulärer Erstbegegnung abschließen.',
+    'Das endgültige Team bilden; jedes Seelenpaar muss auf beiden Seiten einsatzfähig sein.',
+    'Ein Cap-Pokémon bis Level 54 bestimmen; alle anderen höchstens bis Level 52 trainieren.',
+    'Die höchstens 15 außerhalb von Kämpfen erlaubten Top-4-Items gemeinsam festlegen.',
+    'Elektro-, Kampf- oder Gesteins-Antworten vorbereiten und Lorelei besiegen.',
+  ] },
+  { name: 'Top 4 · Kampf 2', ziel: 'Bruno', cap: '56 / 54', fokus: 'Kampf- und Gesteins-Pokémon', punkte: [
+    'Verluste aus Kampf 1 sofort auf alle verbundenen Seelenpartner anwenden.',
+    'Nur erlaubte Heilung außerhalb des Kampfes verwenden und den 15-Item-Zähler beachten.',
+    'Ein Cap-Pokémon bis Level 56 bestimmen; alle anderen höchstens bis Level 54 halten.',
+    'Psycho-, Flug-, Wasser- oder Pflanzen-Attacken sinnvoll verteilen.',
+    'Bruno besiegen, ohne gesperrte oder verstorbene Seelenpartner einzusetzen.',
+  ] },
+  { name: 'Top 4 · Kampf 3', ziel: 'Agathe', cap: '58 / 56', fokus: 'Geist- und Gift-Pokémon', punkte: [
+    'Teamstatus und verbleibende erlaubte Items nach Bruno gemeinsam prüfen.',
+    'Ein Cap-Pokémon bis Level 58 bestimmen; alle anderen höchstens bis Level 56 halten.',
+    'Schnelle Psycho-, Geist- oder starke neutrale physische Attacken vorbereiten.',
+    'Schlaf, Verwirrung und Gift bei der Planung berücksichtigen.',
+    'Agathe besiegen und alle möglichen Verluste sofort für beide Teams notieren.',
+  ] },
+  { name: 'Top 4 · Kampf 4', ziel: 'Siegfried', cap: '60 / 58', fokus: 'Drachen- und Flug-Pokémon', punkte: [
+    'Verbleibende vollständige Seelenpaare und Item-Anzahl vor dem Kampf prüfen.',
+    'Ein Cap-Pokémon bis Level 60 bestimmen; alle anderen höchstens bis Level 58 halten.',
+    'Eis-Attacken als wichtigste Antwort auf Drachen-Pokémon absichern.',
+    'Elektro- oder Gesteins-Antworten für Flug- und Wasser-Pokémon bereithalten.',
+    'Siegfried besiegen und das Team ohne unerlaubte Heilung für den Champ vorbereiten.',
+  ] },
+  { name: 'Champ', ziel: 'Rivale', cap: '63 / 61', fokus: 'Der letzte gemeinsame Kampf', punkte: [
+    'Alle Verluste aus der Top 4 endgültig anwenden und nur vollständige Seelenpaare einsetzen.',
+    'Ein Cap-Pokémon bis Level 63 bestimmen; alle anderen höchstens bis Level 61 halten.',
+    'Für das gemischte Team des Rivalen mehrere Typenabdeckungen statt nur einer Konterstrategie wählen.',
+    'Verbleibende Items ausschließlich nach euren Kampfregeln benutzen.',
+    'Den Champ besiegen – damit ist die SoulLink-Challenge gemeinsam bestanden.',
+  ] },
+]
+
+type AbenteuerInfo = {
+  titel: string
+  ort: string
+  x: number
+  y: number
+  beschreibung: string
+  weg: string[]
+  voraussetzung?: string
+}
+
+const ABENTEUER_INFOS: Record<string, AbenteuerInfo> = {
+  '0-1': { titel: 'Die ersten Pokébälle erhalten', ort: 'Alabastia · Labor von Professor Eich', x: 250, y: 420, beschreibung: 'Mit dem Erhalt der fünf Pokébälle beginnt eure Challenge.', weg: ['Gehe von Alabastia über Route 1 nach Vertania City.', 'Hole im Markt das Paket für Professor Eich ab und bringe es zurück in sein Labor.', 'Nach der Übergabe erhaltet ihr Pokédex und Pokébälle.'], voraussetzung: 'Vorher noch keine Erstbegegnung werten – die Challenge startet erst mit den Pokébällen.' },
+  '0-4': { titel: 'Rocko finden', ort: 'Marmoria City · Pokémon-Arena', x: 240, y: 210, beschreibung: 'Rocko wartet in der Arena von Marmoria City.', weg: ['Durchquere von Vertania City aus Route 2 und den Vertania-Wald.', 'Verlasse den Wald im Norden und folge Route 2 bis Marmoria City.', 'Heile im Pokémon-Center und betrete anschließend die Arena.'] },
+  '1-1': { titel: 'Fossil im Mondberg', ort: 'Mondberg · 2. Untergeschoss', x: 320, y: 165, beschreibung: 'Am Ende des Hauptwegs müsst ihr euch zwischen zwei Fossilien entscheiden.', weg: ['Gehe von Marmoria über Route 3 zum Mondberg.', 'Folge den Leitern immer weiter hinab und besiege die Team-Rocket-Rüpel.', 'Nach dem Kampf gegen den Streber liegen Domfossil links und Helixfossil rechts.'], voraussetzung: 'Das Fossil darf nach euren Regeln nur benutzt werden, wenn die Partner ebenfalls ein Fossil besitzen.' },
+  '1-2': { titel: 'Rivale, Nugget-Brücke und Bill', ort: 'Azuria City · Route 24 und 25', x: 410, y: 180, beschreibung: 'Der Rivale wartet am nördlichen Ausgang von Azuria City.', weg: ['Gehe in Azuria City nach Norden zur Brücke.', 'Besiege zuerst den Rivalen und danach die Trainer der Nugget-Brücke auf Route 24.', 'Biege hinter der Brücke nach Osten auf Route 25 ab und folge dem Weg bis zu Bills Küstenhaus.'] },
+  '1-4': { titel: 'Misty finden', ort: 'Azuria City · Pokémon-Arena', x: 410, y: 180, beschreibung: 'Mistys Wasser-Arena steht im Zentrum von Azuria City.', weg: ['Kehre nach dem Besuch bei Bill nach Azuria City zurück.', 'Heile dein Team im Pokémon-Center.', 'Betrete die Arena in der Stadtmitte und gehe über die Stege zu Misty.'] },
+  '2-1': { titel: 'Zerschneider auf der M.S. Anne', ort: 'Orania City · Hafen', x: 405, y: 350, beschreibung: 'Der Kapitän der M.S. Anne gibt dir VM01 Zerschneider.', weg: ['Zeige am Hafen von Orania City das Bootsticket von Bill.', 'Gehe im Schiff nach oben und folge dem Gang zur Treppe des Kapitäns.', 'Besiege dort den Rivalen und gehe anschließend in die Kapitänskajüte.', 'Sprich mit dem seekranken Kapitän, um VM01 zu erhalten.'], voraussetzung: 'Erledige gewünschte Kämpfe und Items auf dem Schiff vorher – nach dem Verlassen fährt es ab.' },
+  '2-4': { titel: 'Major Bob finden', ort: 'Orania City · Pokémon-Arena', x: 405, y: 350, beschreibung: 'Die Arena liegt im südwestlichen Teil von Orania City.', weg: ['Bringe Zerschneider einem geeigneten Pokémon bei.', 'Zerschneide den kleinen Baum vor der Arena.', 'Finde im Inneren erst den ersten Schalter in einem Mülleimer; der zweite liegt direkt daneben.', 'Nach beiden Schaltern öffnet sich der Weg zu Major Bob.'] },
+  '3-0': { titel: 'Weg durch den Felstunnel', ort: 'Route 10 · Felstunnel', x: 520, y: 195, beschreibung: 'Der Felstunnel verbindet Route 10 mit der Gegend nördlich von Lavandia.', weg: ['Gehe von Azuria nach Osten über Route 9.', 'Folge Route 10 nach Süden bis zum Höhleneingang beim Pokémon-Center.', 'Nutze Blitz für bessere Sicht und folge den Leitern durch die Höhle.', 'Der südliche Ausgang führt weiter nach Lavandia.'], voraussetzung: 'Blitz ist optional, macht die Orientierung aber wesentlich leichter.' },
+  '3-1': { titel: 'Pokémon-Turm vorbereiten', ort: 'Lavandia · Pokémon-Turm', x: 545, y: 255, beschreibung: 'Beim ersten Besuch kannst du den Turm noch nicht vollständig abschließen.', weg: ['Betrete den großen Turm im Osten von Lavandia.', 'Der Rivale wartet auf einer der ersten Etagen.', 'Verlasse den Turm, sobald das unbekannte Geist-Pokémon den Weg blockiert.', 'Hole zuerst das Silph Scope im Rocket-Unterschlupf von Prismania City.'] },
+  '3-2': { titel: 'Rocket-Unterschlupf und Giovanni', ort: 'Prismania City · Rocket-Spielhalle', x: 350, y: 255, beschreibung: 'Der geheime Eingang befindet sich hinter einem Poster in der Spielhalle.', weg: ['Betrete die Rocket-Spielhalle in Prismania City und besiege den Rüpel beim Poster.', 'Untersuche das Poster und drücke den versteckten Schalter.', 'Gehe im Unterschlupf bis U4 und besiege dort den Rüpel für den Aufzugsschlüssel.', 'Fahre mit dem Aufzug zurück nach U4, besiege Giovanni und nimm das Silph Scope.'] },
+  '3-4': { titel: 'Erika finden', ort: 'Prismania City · Pokémon-Arena', x: 350, y: 255, beschreibung: 'Erikas Pflanzen-Arena liegt im Südwesten von Prismania City.', weg: ['Gehe im Süden der Stadt nach Westen.', 'Nutze Zerschneider am kleinen Baum, der den Weg versperrt.', 'Betrete die Arena und folge den Wegen zwischen den Pflanzen zu Erika.'], voraussetzung: 'VM01 Zerschneider von der M.S. Anne wird benötigt.' },
+  '4-0': { titel: 'Pokéflöte im Pokémon-Turm', ort: 'Lavandia · Pokémon-Turm', x: 545, y: 255, beschreibung: 'Mit dem Silph Scope kannst du den Turm jetzt bis zur Spitze abschließen.', weg: ['Kehre mit dem Silph Scope nach Lavandia zurück.', 'Steige durch den Turm und besiege das enttarnte Knogga.', 'Besiege oben die Team-Rocket-Rüpel und rette Mr. Fuji.', 'Folge ihm in sein Haus und sprich mit ihm, um die Pokéflöte zu erhalten.'] },
+  '4-1': { titel: 'Weg nach Fuchsania City', ort: 'Route 12–15 oder Route 16–18', x: 430, y: 385, beschreibung: 'Nach Fuchsania führen zwei verschiedene Wege.', weg: ['Ostweg: Wecke Relaxo südlich von Lavandia auf Route 12 und folge Route 12, 13, 14 und 15.', 'Westweg: Wecke Relaxo westlich von Prismania auf Route 16 und fahre über den Radweg auf Route 17 und 18.', 'Beide Wege enden in Fuchsania City.'], voraussetzung: 'Für beide Wege brauchst du die Pokéflöte. Begegnungen je Route vorher mit den Partnern abstimmen.' },
+  '4-2': { titel: 'Surfer und Goldzähne', ort: 'Fuchsania City · Safari-Zone', x: 400, y: 420, beschreibung: 'Beide wichtigen Gegenstände liegen tief in der Safari-Zone.', weg: ['Betrete die Safari-Zone im Norden von Fuchsania City und gehe zunächst nach Osten.', 'Folge dem langen Außenweg über die nördlichen Bereiche bis in das weit westlich gelegene letzte Gebiet.', 'Gehe dort nach Süden: Die Goldzähne liegen auf dem Boden nahe dem Geheimen Haus.', 'Betrete das Geheime Haus und sprich mit dem Mann für VM03 Surfer.', 'Bringe die Goldzähne anschließend dem Wärter im südöstlichen Fuchsania; er gibt dir VM04 Stärke.'] },
+  '4-4': { titel: 'Koga finden', ort: 'Fuchsania City · Pokémon-Arena', x: 400, y: 420, beschreibung: 'Kogas Arena steht im südwestlichen Teil von Fuchsania City.', weg: ['Heile im Pokémon-Center und gehe zur Arena im Südwesten.', 'Die scheinbar offenen Wege sind durch unsichtbare Wände blockiert.', 'Orientiere dich an den hellen Punkten am Boden und arbeite dich am Rand entlang zu Koga vor.'] },
+  '5-0': { titel: 'Saffronia City öffnen', ort: 'Prismania City → Saffronia City', x: 440, y: 270, beschreibung: 'Die Wächter an den vier Stadttoren lassen dich erst mit Tee passieren.', weg: ['Betrete in Prismania City die große Prismania-Villa.', 'Sprich im Erdgeschoss mit der alten Dame und nimm den Tee an.', 'Gehe durch eines der Wärterhäuser auf Route 5, 6, 7 oder 8.', 'Der Wächter nimmt den Tee an; danach sind alle vier Zugänge zu Saffronia geöffnet.'] },
+  '5-1': { titel: 'Rivale und Lapras in Silph Co.', ort: 'Saffronia City · Silph Co.', x: 440, y: 270, beschreibung: 'Der Rivalenkampf und das geschenkte Lapras liegen auf dem Story-Weg zu Giovanni.', weg: ['Hole zuerst den Türöffner im 4. Obergeschoss.', 'Öffne im 2. Obergeschoss die verschlossene Tür zum Ziel-Teleporter.', 'Der Teleporter bringt dich in das 6. Obergeschoss zum Rivalen.', 'Nach dem Sieg schenkt dir der Mitarbeiter im selben Raum ein Lapras.'] },
+  '5-2': { titel: 'Giovanni in Silph Co. finden', ort: 'Saffronia City · Silph Co., oberste Etage', x: 440, y: 270, beschreibung: 'Giovanni hält sich im abgeschlossenen Raum beim Präsidenten auf.', weg: ['Hole den Türöffner im 4. Obergeschoss der Silph Co.', 'Öffne im 2. Obergeschoss die Tür zum Teleporter und besiege im 6. Obergeschoss den Rivalen.', 'Nimm danach den unteren rechten Teleporter im Rivalenraum.', 'Besiege den letzten Rocket-Rüpel und anschließend Giovanni.', 'Sprich danach mit dem Präsidenten, um den Meisterball zu erhalten.'] },
+  '5-4': { titel: 'Sabrina finden', ort: 'Saffronia City · Pokémon-Arena', x: 440, y: 270, beschreibung: 'Nach der Befreiung der Silph Co. ist Sabrinas Arena zugänglich.', weg: ['Gehe in den nördlichen Teil von Saffronia City.', 'Die richtige Pokémon-Arena liegt direkt neben der Kampfarena.', 'Nutze die Teleporter im Inneren; arbeite dich von Raum zu Raum bis zur mittleren Plattform vor.'] },
+  '6-1': { titel: 'Seeschauminseln', ort: 'Route 20 · zwischen Fuchsania und Zinnoberinsel', x: 315, y: 450, beschreibung: 'Die Inselhöhlen liegen auf der Surfstrecke westlich von Fuchsania City.', weg: ['Surfe von Fuchsania über Route 19 nach Süden und dann auf Route 20 nach Westen.', 'Betrete die östliche Höhle der Seeschauminseln.', 'Schiebe Felsen mit Stärke durch die Löcher, um die Strömung im Untergeschoss zu bremsen.', 'Verlasse die Höhle im Westen und surfe weiter zur Zinnoberinsel.'], voraussetzung: 'Alternativ kannst du später von Alabastia direkt über Route 21 zur Zinnoberinsel surfen.' },
+  '6-3': { titel: 'Geheimschlüssel finden', ort: 'Zinnoberinsel · Pokémon-Haus, U1', x: 240, y: 455, beschreibung: 'Der Geheimschlüssel öffnet die verschlossene Arena der Zinnoberinsel.', weg: ['Betrete das verlassene Pokémon-Haus im Nordwesten der Insel.', 'Betätige die versteckten Schalter in den Mewtu-Statuen, um Türen umzuschalten.', 'Gehe bis in die 3. Etage und springe vom größeren linken Balkon hinunter.', 'Nimm die Treppe ins Untergeschoss und folge dem Gang in den nordwestlichen Raum.', 'Der Geheimschlüssel liegt dort auf einem Tisch.'] },
+  '6-4': { titel: 'Pyro finden', ort: 'Zinnoberinsel · Pokémon-Arena', x: 240, y: 455, beschreibung: 'Pyros Arena befindet sich im Nordosten der Zinnoberinsel.', weg: ['Hole zuerst den Geheimschlüssel im Pokémon-Haus.', 'Öffne damit die zuvor verschlossene Arenatür.', 'Beantworte die Fragen an den Maschinen richtig oder kämpfe gegen die Trainer.', 'Folge den geöffneten Türen bis zu Pyro.'] },
+  '7-0': { titel: 'Eiland-Abstecher abschließen', ort: 'Eiland Eins bis Drei', x: 125, y: 390, beschreibung: 'Bill wartet nach Pyro vor der Arena und nimmt dich mit zu den Sevii-Eilanden.', weg: ['Sprich nach dem Arenasieg vor der Arena mit Bill und fahre nach Eiland Eins.', 'Bringe den Meteoriten-Auftrag nach Eiland Zwei und suche anschließend Irrma auf Eiland Drei.', 'Gehe über die Bundbrücke zum Beerenforst und rette Irrma.', 'Kehre zu Bill auf Eiland Eins zurück, um wieder zur Zinnoberinsel zu fahren.'] },
+  '7-2': { titel: 'Arena von Vertania öffnen', ort: 'Vertania City · Pokémon-Arena', x: 245, y: 355, beschreibung: 'Nach sieben Orden ist die lange geschlossene Arena endlich geöffnet.', weg: ['Kehre nach dem Eiland-Abstecher zur Zinnoberinsel zurück.', 'Surfe über Route 21 nach Norden bis Alabastia oder nutze Fliegen.', 'Reise weiter nach Vertania City und betrete die Arena im Nordosten.', 'Die Pfeilfelder führen dich durch die Arena zu Giovanni.'] },
+  '7-4': { titel: 'Giovanni und der letzte Rivalenkampf', ort: 'Vertania City · danach Route 22', x: 245, y: 355, beschreibung: 'Nach Giovanni führt der Weg zur Pokémon-Liga westlich aus Vertania City.', weg: ['Besiege Giovanni in der Arena und erhalte den Erdorden.', 'Heile dein Team und verlasse Vertania City nach Westen auf Route 22.', 'Der Rivale fordert dich auf dem Weg zum Liga-Tor noch einmal heraus.', 'Gehe danach weiter nach Westen und anschließend nach Norden zu Route 23.'] },
+  '8-0': { titel: 'Route 23 und Siegesstraße', ort: 'Pokémon-Liga-Tor · Siegesstraße', x: 145, y: 150, beschreibung: 'Der letzte Weg zur Liga beginnt westlich von Vertania City.', weg: ['Gehe über Route 22 zum großen Liga-Tor.', 'Zeige an den Kontrollpunkten nacheinander alle acht Orden vor.', 'Nutze Surfer auf Route 23 und betrete im Norden die Siegesstraße.', 'Schiebe die großen Felsen mit Stärke auf die Bodenschalter, um die Sperren zu öffnen.', 'Der Ausgang führt zum Indigo-Plateau.'], voraussetzung: 'Alle acht Orden sowie Surfer und Stärke werden benötigt.' },
+  '8-4': { titel: 'Lorelei finden', ort: 'Indigo-Plateau · erster Top-4-Raum', x: 120, y: 120, beschreibung: 'Lorelei ist das erste Mitglied der Top 4.', weg: ['Heile und bereite dein endgültiges Team im Indigo-Plateau vor.', 'Kaufe alles Nötige, bevor du die große Tür betrittst.', 'Nach dem Betreten führt der Weg direkt in Loreleis Raum.'], voraussetzung: 'Nach Beginn der Top 4 kannst du nicht mehr zum Pokémon-Center zurück, ohne zu gewinnen oder zu verlieren.' },
+  '9-4': { titel: 'Bruno finden', ort: 'Indigo-Plateau · zweiter Top-4-Raum', x: 120, y: 120, beschreibung: 'Bruno wartet direkt hinter Loreleis Raum.', weg: ['Wende Verluste und eure Heilregeln nach Lorelei an.', 'Gehe durch die hintere Tür ihres Raumes.', 'Folge dem kurzen Gang bis zu Bruno.'] },
+  '10-4': { titel: 'Agathe finden', ort: 'Indigo-Plateau · dritter Top-4-Raum', x: 120, y: 120, beschreibung: 'Agathe ist das dritte Mitglied der Top 4.', weg: ['Prüfe nach Bruno sofort Teamstatus und Item-Zähler.', 'Gehe durch die hintere Tür in den nächsten Raum.', 'Agathe wartet am Ende des kurzen Weges.'] },
+  '11-4': { titel: 'Siegfried finden', ort: 'Indigo-Plateau · vierter Top-4-Raum', x: 120, y: 120, beschreibung: 'Siegfried ist das letzte Mitglied vor dem Champ.', weg: ['Gehe nach Agathe durch die hintere Tür.', 'Folge dem Gang in den Drachen-Raum.', 'Sprich mit Siegfried, wenn beide Teams bereit sind.'] },
+  '12-4': { titel: 'Zum Champ', ort: 'Indigo-Plateau · Champ-Raum', x: 120, y: 120, beschreibung: 'Nach Siegfried wartet dein Rivale als amtierender Champ.', weg: ['Wende mögliche Verluste aus dem Siegfried-Kampf endgültig an.', 'Gehe durch die letzte Tür hinter Siegfried.', 'Bereite vor dem Ansprechen des Rivalen alle erlaubten Items und Start-Pokémon vor.', 'Besiege den Rivalen, um die Challenge abzuschließen.'] },
+}
+
+function KantoKarte({ info }: { info: AbenteuerInfo }) {
+  const orte = [
+    ['Indigo', 120, 120], ['Marmoria', 240, 210], ['Azuria', 410, 180], ['Prismania', 350, 255],
+    ['Saffronia', 440, 270], ['Lavandia', 545, 255], ['Vertania', 245, 355], ['Orania', 405, 350],
+    ['Fuchsania', 400, 420], ['Alabastia', 250, 420], ['Zinnober', 240, 455],
+  ] as const
+  return (
+    <div className="kanto-karte">
+      <svg viewBox="0 0 700 500" role="img" aria-label={`Kanto-Karte mit markiertem Ort: ${info.ort}`}>
+        <defs><filter id="karten-schatten"><feDropShadow dx="0" dy="5" stdDeviation="5" floodOpacity=".18" /></filter></defs>
+        <rect width="700" height="500" rx="16" fill="#badde1" />
+        <path d="M85 72h105l25 48 72 12 31 35 95-28 57 34 115 4 44 64-40 60-78 22-22 74-67 58-91-10-59 35-100-19-51-70-38-91 42-65-32-68Z" fill="#dce7bd" stroke="#7ea485" strokeWidth="8" filter="url(#karten-schatten)" />
+        <g fill="none" stroke="#d6a05a" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" opacity=".8">
+          <path d="M250 420 245 355 240 210 320 165 410 180 440 270 545 255" />
+          <path d="M245 355 350 255 440 270 405 350 400 420" />
+          <path d="M250 420 240 455M240 455 315 450 400 420" />
+          <path d="M245 355 180 290 145 150 120 120" />
+        </g>
+        <g>{orte.map(([name, x, y]) => <g key={name}><circle cx={x} cy={y} r="8" fill="#fff" stroke="#284b43" strokeWidth="5" /><text x={x} y={y - 14} textAnchor="middle">{name}</text></g>)}</g>
+        <g className="karten-marker"><circle cx={info.x} cy={info.y} r="24" /><circle cx={info.x} cy={info.y} r="9" /><path d={`M${info.x} ${info.y + 25}l-10 18h20Z`} /></g>
+      </svg>
+      <div><span>MARKIERTER ORT</span><strong>{info.ort}</strong><small>Schematische Orientierungskarte – die genaue Wegbeschreibung steht beim Info-Knopf.</small></div>
+    </div>
+  )
+}
+
+function AbenteuerPlan({ zurueck }: { zurueck: () => void }) {
+  const startIndex = (() => {
+    const eigener = localStorage.getItem('feuerrot-abenteuer-etappe')
+    const arena = localStorage.getItem('feuerrot-arenen-fortschritt')
+    const wert = Number(eigener ?? arena ?? 0)
+    return Number.isInteger(wert) && wert >= 0 && wert < ABENTEUER_ETAPPEN.length ? wert : 0
+  })()
+  const [etappeIndex, setEtappeIndex] = useState(startIndex)
+  const [erledigt, setErledigt] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem('feuerrot-abenteuer-checkliste') ?? '{}') as Record<string, boolean> }
+    catch { return {} }
+  })
+  const [popup, setPopup] = useState<{ schluessel: string; ansicht: 'info' | 'karte' } | null>(null)
+  const etappe = ABENTEUER_ETAPPEN[etappeIndex]
+  const schluessel = (punktIndex: number) => `${etappeIndex}-${punktIndex}`
+  const fertigInEtappe = etappe.punkte.filter((_, index) => erledigt[schluessel(index)]).length
+  const allePunkte = ABENTEUER_ETAPPEN.reduce((summe, eintrag) => summe + eintrag.punkte.length, 0)
+  const gesamtFertig = Object.entries(erledigt).filter(([key, wert]) => wert && /^\d+-\d+$/.test(key)).length
+
+  useEffect(() => { localStorage.setItem('feuerrot-abenteuer-etappe', String(etappeIndex)) }, [etappeIndex])
+  useEffect(() => { localStorage.setItem('feuerrot-abenteuer-checkliste', JSON.stringify(erledigt)) }, [erledigt])
+  useEffect(() => {
+    if (!popup) return
+    const schliessen = (event: KeyboardEvent) => { if (event.key === 'Escape') setPopup(null) }
+    window.addEventListener('keydown', schliessen)
+    return () => window.removeEventListener('keydown', schliessen)
+  }, [popup])
+
+  function wechseln(index: number) {
+    setEtappeIndex(index)
+    window.scrollTo({ top: 300, behavior: 'smooth' })
+  }
+
+  function alsFortschrittSetzen() {
+    localStorage.setItem('feuerrot-arenen-fortschritt', String(etappeIndex))
+  }
+
+  return (
+    <main className="abenteuer-seite">
+      <header className="abenteuer-kopf"><button className="zurueck" onClick={zurueck}>← Startseite</button><span className="edition">FEUERROT · SOULLINK-ABENTEUERPLAN</span><h1>Von Arena zu Arena.</h1><p>Ein überschaubarer roter Faden durch Kanto. Hake die wichtigsten Schritte ab und behalte Regeln, Begegnungen und Level-Caps im Blick.</p></header>
+      <section className="abenteuer-inhalt">
+        <div className="abenteuer-gesamt"><div><small>GESAMTFORTSCHRITT</small><strong>{gesamtFertig} von {allePunkte} Schritten</strong></div><span><i style={{ width: `${(gesamtFertig / allePunkte) * 100}%` }} /></span></div>
+        <nav className="etappen-leiste" aria-label="Abenteuerabschnitt auswählen">{ABENTEUER_ETAPPEN.map((eintrag, index) => { const fertig = eintrag.punkte.every((_, punkt) => erledigt[`${index}-${punkt}`]); return <button className={`${etappeIndex === index ? 'aktiv' : ''} ${fertig ? 'fertig' : ''}`} key={eintrag.name} onClick={() => wechseln(index)}><span>{index < 8 ? index + 1 : index < 12 ? `T${index - 7}` : 'C'}</span><small>{eintrag.name}</small></button> })}</nav>
+        <article className="etappe-karte">
+          <header><div><span>ABSCHNITT {String(etappeIndex + 1).padStart(2, '0')}</span><h2>{etappe.name}: {etappe.ziel}</h2><p>{etappe.fokus}</p></div><div className="etappe-cap"><small>LEVEL-CAP</small><strong>{etappe.cap}</strong><button onClick={alsFortschrittSetzen}>Als aktuellen Fortschritt übernehmen</button></div></header>
+          <div className="etappe-fortschritt"><span><i style={{ width: `${(fertigInEtappe / etappe.punkte.length) * 100}%` }} /></span><strong>{fertigInEtappe} / {etappe.punkte.length} erledigt</strong></div>
+          <div className="etappe-checkliste">{etappe.punkte.map((punkt, index) => { const key = schluessel(index); const info = ABENTEUER_INFOS[key]; return <div className={`etappe-punkt ${erledigt[key] ? 'erledigt' : ''}`} key={punkt}><label><input type="checkbox" checked={Boolean(erledigt[key])} onChange={() => setErledigt((aktuell) => ({ ...aktuell, [key]: !aktuell[key] }))} /><span><i>✓</i><b>{String(index + 1).padStart(2, '0')}</b></span><p>{punkt}</p></label>{info && <div className="etappe-punkt__hilfen"><button className="etappe-info-knopf" onClick={() => setPopup({ schluessel: key, ansicht: 'info' })} title="Wegbeschreibung öffnen" aria-label={`Wegbeschreibung zu ${info.titel} öffnen`}>i</button><button className="etappe-karte-knopf" onClick={() => setPopup({ schluessel: key, ansicht: 'karte' })} title="Ort auf der Karte zeigen" aria-label={`${info.ort} auf der Karte zeigen`}>⌖</button></div>}</div> })}</div>
+          <div className="etappe-navigation"><button onClick={() => wechseln(Math.max(0, etappeIndex - 1))} disabled={etappeIndex === 0}>← Vorheriger Abschnitt</button><button onClick={() => wechseln(Math.min(ABENTEUER_ETAPPEN.length - 1, etappeIndex + 1))} disabled={etappeIndex === ABENTEUER_ETAPPEN.length - 1}>Nächster Abschnitt →</button></div>
+        </article>
+      </section>
+      {popup && ABENTEUER_INFOS[popup.schluessel] && (() => { const info = ABENTEUER_INFOS[popup.schluessel]; return <div className="abenteuer-popup" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPopup(null) }}><section role="dialog" aria-modal="true" aria-labelledby="abenteuer-popup-titel"><button className="abenteuer-popup__schliessen" onClick={() => setPopup(null)} aria-label="Fenster schließen">×</button><header><span>{popup.ansicht === 'info' ? 'WEGBESCHREIBUNG' : 'KANTO-KARTE'}</span><h2 id="abenteuer-popup-titel">{info.titel}</h2><p>{info.ort}</p></header><div className="abenteuer-popup__wechsel"><button className={popup.ansicht === 'info' ? 'aktiv' : ''} onClick={() => setPopup({ ...popup, ansicht: 'info' })}>i&nbsp; Info</button><button className={popup.ansicht === 'karte' ? 'aktiv' : ''} onClick={() => setPopup({ ...popup, ansicht: 'karte' })}>⌖&nbsp; Karte</button></div>{popup.ansicht === 'info' ? <div className="abenteuer-popup__info"><p>{info.beschreibung}</p><ol>{info.weg.map((schritt) => <li key={schritt}>{schritt}</li>)}</ol>{info.voraussetzung && <aside><strong>Wichtig</strong><span>{info.voraussetzung}</span></aside>}</div> : <KantoKarte info={info} />}</section></div> })()}
+    </main>
+  )
+}
+
+type BegegnungsStatus = 'offen' | 'gefangen' | 'fehlgeschlagen' | 'ausnahme'
+type BegegnungEintrag = {
+  id: string
+  gebiet: string
+  pokemonRot: string
+  pokemonBlau: string
+  status: BegegnungsStatus
+  ausnahme: string
+  notiz: string
+}
+
+const GEBIETS_VORSCHLAEGE = [
+  ...Array.from({ length: 25 }, (_, index) => `Route ${index + 1}`),
+  'Vertania-Wald', 'Mondberg', 'Digda-Höhle', 'Felstunnel', 'Pokémon-Turm',
+  'Kraftwerk', 'Safari-Zone', 'Seeschauminseln', 'Pokémon-Villa', 'Siegesstraße',
+  'Azuria-Höhle', 'Glutberg', 'Eiskaskadenhöhle', 'Beerenforst', 'Verlorene Höhle',
+  'Musterbuschwald', 'Wandelhöhle', 'Wasserweg', 'Ruinental', '7-Schatzschlucht',
+]
+
+const STATUS_TEXTE: Record<BegegnungsStatus, string> = {
+  offen: 'Noch offen',
+  gefangen: 'Erfolgreich gefangen',
+  fehlgeschlagen: 'Fang fehlgeschlagen',
+  ausnahme: 'Sonderbegegnung',
+}
+
+function BegegnungsTracker({ zurueck }: { zurueck: () => void }) {
+  const [eintraege, setEintraege] = useState<BegegnungEintrag[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('feuerrot-begegnungen') ?? '[]') as BegegnungEintrag[]
+    } catch {
+      return []
+    }
+  })
+  const [filter, setFilter] = useState<'alle' | BegegnungsStatus>('alle')
+  const namen = gespeicherteNamenLesen()
+
+  useEffect(() => {
+    localStorage.setItem('feuerrot-begegnungen', JSON.stringify(eintraege))
+  }, [eintraege])
+
+  function hinzufuegen() {
+    const neu: BegegnungEintrag = {
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      gebiet: '', pokemonRot: '', pokemonBlau: '', status: 'offen', ausnahme: 'Keine', notiz: '',
+    }
+    setEintraege((aktuell) => [neu, ...aktuell])
+  }
+
+  function aendern(id: string, werte: Partial<BegegnungEintrag>) {
+    setEintraege((aktuell) => aktuell.map((eintrag) => eintrag.id === id ? { ...eintrag, ...werte } : eintrag))
+  }
+
+  function entfernen(id: string) {
+    if (window.confirm('Diesen Gebiets-Eintrag wirklich löschen?')) {
+      setEintraege((aktuell) => aktuell.filter((eintrag) => eintrag.id !== id))
+    }
+  }
+
+  const sichtbar = filter === 'alle' ? eintraege : eintraege.filter((eintrag) => eintrag.status === filter)
+  const anzahl = (status: BegegnungsStatus) => eintraege.filter((eintrag) => eintrag.status === status).length
+
+  return (
+    <main className="begegnungen-seite">
+      <header className="begegnungen-kopf">
+        <button className="zurueck" onClick={zurueck}>← Startseite</button>
+        <span className="edition">SOULLINK · ERSTE BEGEGNUNG</span>
+        <h1>Keine Route vergessen.</h1>
+        <p>Dokumentiere jede Erstbegegnung und erkenne sofort, in welchen Gebieten euer gemeinsamer Fang noch offen ist.</p>
+      </header>
+
+      <section className="begegnungen-inhalt">
+        <div className="begegnungen-statistik">
+          <div><strong>{eintraege.length}</strong><span>Gebiete erfasst</span></div>
+          <div><strong>{anzahl('offen')}</strong><span>Noch offen</span></div>
+          <div><strong>{anzahl('gefangen')}</strong><span>Gefangen</span></div>
+          <div><strong>{anzahl('fehlgeschlagen')}</strong><span>Fehlgeschlagen</span></div>
+        </div>
+
+        <div className="begegnungen-werkzeugleiste">
+          <div className="begegnungen-filter">
+            {(['alle', 'offen', 'gefangen', 'fehlgeschlagen', 'ausnahme'] as const).map((wert) => (
+              <button className={filter === wert ? 'aktiv' : ''} key={wert} onClick={() => setFilter(wert)}>{wert === 'alle' ? 'Alle' : STATUS_TEXTE[wert]}</button>
+            ))}
+          </div>
+          <button className="begegnung-neu" onClick={hinzufuegen}>+ Gebiet eintragen</button>
+        </div>
+
+        <datalist id="gebiets-vorschlaege">{GEBIETS_VORSCHLAEGE.map((gebiet) => <option value={gebiet} key={gebiet} />)}</datalist>
+
+        {sichtbar.length ? (
+          <div className="begegnungen-liste">
+            {sichtbar.map((eintrag, index) => (
+              <article className={`begegnung-karte begegnung-karte--${eintrag.status}`} key={eintrag.id}>
+                <header>
+                  <span>{String(eintraege.length - index).padStart(2, '0')}</span>
+                  <label>Route oder Gebiet<input list="gebiets-vorschlaege" value={eintrag.gebiet} onChange={(event) => aendern(eintrag.id, { gebiet: event.target.value })} placeholder="z. B. Route 3" /></label>
+                  <label>Status<select value={eintrag.status} onChange={(event) => aendern(eintrag.id, { status: event.target.value as BegegnungsStatus })}>{(Object.keys(STATUS_TEXTE) as BegegnungsStatus[]).map((status) => <option value={status} key={status}>{STATUS_TEXTE[status]}</option>)}</select></label>
+                  <button onClick={() => entfernen(eintrag.id)} aria-label="Gebiets-Eintrag löschen">×</button>
+                </header>
+                <div className="begegnung-paar">
+                  <label className="begegnung-pokemon begegnung-pokemon--rot"><span>{namen.rot || 'Team Rot'}</span><input value={eintrag.pokemonRot} onChange={(event) => aendern(eintrag.id, { pokemonRot: event.target.value })} placeholder="Erstes Pokémon …" /></label>
+                  <span className="begegnung-verbindung">↔<small>Seelenpartner</small></span>
+                  <label className="begegnung-pokemon begegnung-pokemon--blau"><span>{namen.blau || 'Team Blau'}</span><input value={eintrag.pokemonBlau} onChange={(event) => aendern(eintrag.id, { pokemonBlau: event.target.value })} placeholder="Erstes Pokémon …" /></label>
+                </div>
+                <div className="begegnung-zusatz">
+                  <label>Ausnahme<select value={eintrag.ausnahme} onChange={(event) => aendern(eintrag.id, { ausnahme: event.target.value })}><option>Keine</option><option>Geschenktes Pokémon</option><option>Statisches Pokémon</option><option>Fossil</option><option>Shiny-Klausel</option></select></label>
+                  <label>Notiz<input value={eintrag.notiz} onChange={(event) => aendern(eintrag.id, { notiz: event.target.value })} placeholder="Optional: Fangversuch, Besonderheit …" /></label>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="begegnungen-leer"><span>⌖</span><strong>{eintraege.length ? 'Kein Eintrag passt zum Filter' : 'Noch kein Gebiet erfasst'}</strong><p>Lege den ersten Eintrag an, sobald ihr eure ersten Pokébälle erhalten habt.</p><button onClick={hinzufuegen}>Erstes Gebiet eintragen</button></div>
+        )}
+      </section>
+    </main>
+  )
+}
+
+type CapMitglied = {
+  token: string
+  id: number
+  level: number
+  slot: number
+  limit: number
+  capPokemon: boolean
+  eigeneUeberschreitung: boolean
+  gesperrt: boolean
+  partnerName: string
+}
+
+function CapTeam({ name, farbe, mitglieder, auswahl, onAuswahl }: { name: string; farbe: 'rot' | 'blau'; mitglieder: CapMitglied[]; auswahl: string; onAuswahl: (token: string) => void }) {
+  return (
+    <section className={`cap-team cap-team--${farbe}`}>
+      <header><span className={`team-punkt team-punkt--${farbe}`} /><div><small>CAP-PRÜFUNG</small><h2>{name}</h2></div></header>
+      <label className="cap-kandidat"><span>Dieses eine Pokémon darf bis zum hohen Cap</span><select value={auswahl} onChange={(event) => onAuswahl(event.target.value)}><option value="">Noch nicht festgelegt</option>{mitglieder.map((mitglied) => <option value={mitglied.token} key={mitglied.token}>Slot {mitglied.slot + 1}: {POKEMON[mitglied.id - 1].name}</option>)}</select></label>
+      <div className="cap-mitglieder">
+        {mitglieder.map((mitglied) => (
+          <article className={`${mitglied.gesperrt ? 'cap-mitglied--gesperrt' : 'cap-mitglied--bereit'}`} key={mitglied.token}>
+            <img src={BILD(mitglied.id)} alt={POKEMON[mitglied.id - 1].name} />
+            <div><small>Slot {mitglied.slot + 1}{mitglied.capPokemon ? ' · Cap-Pokémon' : ''}</small><strong>{POKEMON[mitglied.id - 1].name}</strong><span>Seelenpartner: {mitglied.partnerName}</span></div>
+            <dl><div><dt>Level</dt><dd>{mitglied.level}</dd></div><div><dt>Limit</dt><dd>{mitglied.limit}</dd></div></dl>
+            <em>{mitglied.gesperrt ? (mitglied.eigeneUeberschreitung ? 'Über dem erlaubten Limit' : 'Seelenpartner über Limit') : 'Einsatzbereit'}</em>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CapWaechter({ zurueck, teamplanerOeffnen }: { zurueck: () => void; teamplanerOeffnen: () => void }) {
+  const [paare] = useState<PokemonPaar[]>(gespeichertePaareLesen)
+  const [namen] = useState(gespeicherteNamenLesen)
+  const [capPokemon, setCapPokemon] = useState<{ rot: string; blau: string }>(() => {
+    try { return JSON.parse(localStorage.getItem('feuerrot-cap-pokemon') ?? '{"rot":"","blau":""}') as { rot: string; blau: string } }
+    catch { return { rot: '', blau: '' } }
+  })
+  const fortschrittText = localStorage.getItem('feuerrot-arenen-fortschritt')
+  const fortschritt = fortschrittText === null ? null : Number(fortschrittText)
+  const abschnitt = fortschritt !== null && ARENEN_FORTSCHRITT[fortschritt] ? ARENEN_FORTSCHRITT[fortschritt] : null
+
+  useEffect(() => { localStorage.setItem('feuerrot-cap-pokemon', JSON.stringify(capPokemon)) }, [capPokemon])
+
+  const aktiv = paare.filter((paar) => paar.aktiv && paar.slot !== null).sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0))
+  const [hohesCap, niedrigesCap] = abschnitt ? abschnitt.cap.split(' / ').map(Number) : [0, 0]
+  const paarPruefung = aktiv.map((paar) => {
+    const tokenRot = `${paar.id}:links`
+    const tokenBlau = `${paar.id}:rechts`
+    const limitRot = capPokemon.rot === tokenRot ? hohesCap : niedrigesCap
+    const limitBlau = capPokemon.blau === tokenBlau ? hohesCap : niedrigesCap
+    const rotDrueber = paar.levelLinks > limitRot
+    const blauDrueber = paar.levelRechts > limitBlau
+    return { paar, tokenRot, tokenBlau, limitRot, limitBlau, rotDrueber, blauDrueber, gesperrt: rotDrueber || blauDrueber }
+  })
+  const blockiert = paarPruefung.filter((eintrag) => eintrag.gesperrt).length
+  const rot: CapMitglied[] = paarPruefung.map(({ paar, tokenRot, limitRot, rotDrueber, gesperrt }) => ({ token: tokenRot, id: paar.links, level: paar.levelLinks, slot: paar.slot ?? 0, limit: limitRot, capPokemon: capPokemon.rot === tokenRot, eigeneUeberschreitung: rotDrueber, gesperrt, partnerName: POKEMON[paar.rechts - 1].name }))
+  const blau: CapMitglied[] = paarPruefung.map(({ paar, tokenBlau, limitBlau, blauDrueber, gesperrt }) => ({ token: tokenBlau, id: paar.rechts, level: paar.levelRechts, slot: paar.slot ?? 0, limit: limitBlau, capPokemon: capPokemon.blau === tokenBlau, eigeneUeberschreitung: blauDrueber, gesperrt, partnerName: POKEMON[paar.links - 1].name }))
+
+  return (
+    <main className="cap-seite">
+      <header className="cap-kopf"><button className="zurueck" onClick={zurueck}>← Startseite</button><span className="edition">REGEL 09 · LEVEL-CAP-WÄCHTER</span><h1>Trainieren, ohne zu überleveln.</h1><p>Der Wächter verbindet euren Arenenfortschritt mit den Leveln im Teamplaner und sperrt bei einem Verstoß automatisch das gesamte Seelenpaar.</p></header>
+      <section className="cap-inhalt">
+        {!abschnitt ? <div className="cap-leer"><strong>Noch kein Arenenfortschritt ausgewählt</strong><p>Wähle auf der Startseite zuerst die nächste Arena oder den nächsten Liga-Kampf.</p><button onClick={zurueck}>Zur Startseite</button></div>
+        : !aktiv.length ? <div className="cap-leer"><strong>Noch kein aktives Team vorhanden</strong><p>Lege im Teamplaner zuerst mindestens ein aktives Seelenpaar an.</p><button onClick={teamplanerOeffnen}>Zum Teamplaner</button></div>
+        : <>
+          <div className="cap-uebersicht"><div><small>NÄCHSTER ABSCHNITT</small><strong>{abschnitt.name}</strong></div><div><small>MAXIMAL EIN POKÉMON</small><strong>Level {hohesCap}</strong></div><div><small>ÜBRIGES TEAM</small><strong>Level {niedrigesCap}</strong></div><div className={blockiert ? 'warnung' : 'bereit'}><small>SEELENPAARE</small><strong>{blockiert ? `${blockiert} gesperrt` : 'Alle bereit'}</strong></div></div>
+          <p className="cap-hinweis">Wähle für jedes Team genau ein Cap-Pokémon. Alle anderen dürfen nur das niedrigere Level erreichen. Überschreitet eine Seite ihr Limit, wird das verbundene Paar auf beiden Seiten gesperrt.</p>
+          <div className="cap-teams"><CapTeam name={namen.rot || 'Team Rot'} farbe="rot" mitglieder={rot} auswahl={capPokemon.rot} onAuswahl={(token) => setCapPokemon((aktuell) => ({ ...aktuell, rot: token }))} /><CapTeam name={namen.blau || 'Team Blau'} farbe="blau" mitglieder={blau} auswahl={capPokemon.blau} onAuswahl={(token) => setCapPokemon((aktuell) => ({ ...aktuell, blau: token }))} /></div>
+        </>}
+      </section>
+    </main>
+  )
+}
+
+type SoulLinkRegel = {
+  titel: string
+  symbol: string
+  kurz: string
+  details: string[]
+  wichtig?: boolean
+}
+
+const SOULLINK_REGELN: SoulLinkRegel[] = [
+  {
+    titel: 'Erster Fang und Seelenpartner',
+    symbol: '◎',
+    wichtig: true,
+    kurz: 'Pro Route oder Gebiet darf nur das erste Pokémon gefangen werden. Dieses Pokémon wird mit den Pokémon der Partner verbunden und ist deren Seelenpartner.',
+    details: [
+      'Pokémon, die bereits gefangen wurden – oder deren Evolutionsreihe – zählen nicht als Routen-Pokémon und dürfen neu ausgewürfelt werden.',
+      'Der Fangpool wird individuell verkleinert. Ein Pikachu darf beispielsweise gefangen werden, obwohl ein Partner diesem Pokémon bereits begegnet ist.',
+      'Geschenkte Pokémon, statische Pokémon und Fossilien gelten nicht als Gebiets-Pokémon und dürfen verwendet werden – auch wenn sie zuvor bereits gefangen wurden.',
+      'Fossilien dürfen nur benutzt werden, wenn die Partner ebenfalls ein Fossil besitzen.',
+    ],
+  },
+  {
+    titel: 'Fehlgeschlagener Fangversuch',
+    symbol: '×',
+    wichtig: true,
+    kurz: 'Flieht das Pokémon, stirbt es beim Fangversuch oder sind keine Pokébälle mehr vorhanden, darf in diesem Gebiet kein weiterer Fangversuch gestartet werden.',
+    details: ['Haben die Partner währenddessen Pokémon gefangen, müssen diese wieder freigelassen werden.'],
+  },
+  {
+    titel: 'Austausch mit dem PC',
+    symbol: '↔',
+    kurz: 'Seelenpartner dürfen beliebig oft gemeinsam gegen eine andere vollständige Seelenverbindung vom PC ausgetauscht werden.',
+    details: [],
+  },
+  {
+    titel: 'Tod und Grab-Box',
+    symbol: '†',
+    wichtig: true,
+    kurz: 'Besiegte Pokémon gelten als verstorben und müssen in eine Grab-Box auf dem PC gelegt werden. Das gilt ebenfalls für alle zugehörigen Seelenpartner.',
+    details: ['Befinden sich die Seelenpartner noch im Kampf, dürfen sie nur bis zum Ende dieses Kampfes benutzt werden. Bei der nächsten Gelegenheit müssen sie in die Grab-Box transferiert werden.'],
+  },
+  {
+    titel: 'Spitznamen',
+    symbol: '✎',
+    kurz: 'Jedes Pokémon erhält einen Spitznamen, den der jeweilige Nachbar auswählt.',
+    details: ['Reihenfolge: Try → Chef → Ruth → Try.'],
+  },
+  {
+    titel: 'Randomisierte Pokémon',
+    symbol: '↻',
+    kurz: 'Die Pokémon der Challenge werden randomisiert.',
+    details: ['Das gilt für Starter, wilde Pokémon, Tausch-Pokémon, geschenkte Pokémon, Fossilien, statische Pokémon und Trainer-Pokémon.'],
+  },
+  {
+    titel: 'Randomisierte Items',
+    symbol: '◇',
+    kurz: 'Items werden ebenfalls randomisiert.',
+    details: ['Das gilt für Feld-Items und getragene Items.'],
+  },
+  {
+    titel: 'Bonus-Shop',
+    symbol: '₽',
+    kurz: 'Der Bonus-Shop im Pokémarkt ist randomisiert und kann beispielsweise Meisterbälle, Evolutionssteine oder starke TMs enthalten.',
+    details: ['Jedes Item aus dem Bonus-Shop darf höchstens einmal gekauft werden.'],
+  },
+  {
+    titel: 'Level-Cap',
+    symbol: '▲',
+    wichtig: true,
+    kurz: 'Kein Team-Pokémon darf das Level des stärksten Pokémon des nächsten Arenaleiters überschreiten. Andernfalls dürfen dieses Pokémon und sein Seelenpartner nicht kämpfen, bis das Level-Cap wieder erhöht wurde.',
+    details: [
+      'Sonderregel: Höchstens ein Pokémon im Team darf das Level-Cap erreichen. Alle anderen dürfen nur bis zwei Level unter dem Cap trainiert werden.',
+      'Sind zwei oder mehr Pokémon überlevelt, darf nur eines davon benutzt werden.',
+    ],
+  },
+  {
+    titel: 'Sonderbonbons',
+    symbol: '◆',
+    kurz: 'Sonderbonbons dürfen zum Erreichen des aktuellen Caps erst unmittelbar vor einem Arenaleiter, der Top 4 oder dem Champ benutzt werden.',
+    details: ['Sie dürfen jederzeit benutzt werden, um Pokémon bis zum Level-Cap der zuletzt besiegten Arena nachzuziehen.'],
+  },
+  {
+    titel: 'Kampffolge',
+    symbol: '»',
+    kurz: 'Die Kampffolge wird in den Spieleinstellungen auf „Folgen“ gestellt.',
+    details: [],
+  },
+  {
+    titel: 'Gegenstände im Kampf',
+    symbol: '+',
+    wichtig: true,
+    kurz: 'Gegenstände dürfen in Kämpfen nur verwendet werden, wenn der Gegner ebenfalls einen Gegenstand verwendet.',
+    details: ['Während der gesamten Top 4 dürfen außerhalb von Kämpfen höchstens 15 Items benutzt werden.'],
+  },
+  {
+    titel: 'Emote-only',
+    symbol: '☻',
+    kurz: 'Während Arenaleiter-, Top-4- und Rivalen-Kämpfen gilt Emote-only.',
+    details: [],
+  },
+  {
+    titel: 'Shiny-Klausel',
+    symbol: '✦',
+    kurz: 'Shiny-Pokémon dürfen jederzeit gefangen werden.',
+    details: ['Ein Shiny darf mit einem beliebigen Pokémon aus einer bestehenden Seelenverbindung ausgetauscht werden.'],
+  },
+  {
+    titel: 'Sieg und Niederlage',
+    symbol: '♛',
+    wichtig: true,
+    kurz: 'Die Challenge ist bestanden, sobald der Champ der Region besiegt wurde.',
+    details: ['Die Challenge ist verloren, wenn das komplette Team eines Spielers besiegt wurde.'],
+  },
+  {
+    titel: 'Beginn der Challenge',
+    symbol: '●',
+    kurz: 'Die Challenge beginnt, sobald die ersten Pokébälle erhalten wurden.',
+    details: [],
+  },
+]
+
+function Regeln({ zurueck }: { zurueck: () => void }) {
+  function zuRegel(index: number) {
+    document.getElementById(`regel-${index + 1}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  return (
+    <main className="regeln-seite">
+      <header className="regeln-kopf">
+        <button className="zurueck" onClick={zurueck}>← Startseite</button>
+        <span className="edition">SOULLINK · RANDOMIZER · REGELWERK</span>
+        <h1>Gemeinsam verbunden.<br />Gemeinsam überleben.</h1>
+        <p>16 Regeln für eure Feuerrot-SoulLink-Challenge – von der ersten Begegnung bis zum Champ.</p>
+        <div className="regeln-kopf__werte">
+          <div><strong>16</strong><span>Regeln</span></div>
+          <div><strong>1</strong><span>Seelenverbindung</span></div>
+          <div><strong>∞</strong><span>Teamgeist</span></div>
+        </div>
+      </header>
+
+      <section className="regeln-inhalt">
+        <nav className="regeln-sprungmarken" aria-label="Direkt zu einer Regel">
+          <span>Schnellwahl</span>
+          <div>{SOULLINK_REGELN.map((regel, index) => <button key={regel.titel} onClick={() => zuRegel(index)} aria-label={`Zu Regel ${index + 1}: ${regel.titel}`}>{String(index + 1).padStart(2, '0')}</button>)}</div>
+        </nav>
+
+        <div className="regeln-einleitung">
+          <span>VOR DEM START</span>
+          <p>Alle Teilnehmer sollten diese Regeln gemeinsam lesen und offene Sonderfälle klären. Eine vollständige Seelenverbindung gewinnt und verliert immer zusammen.</p>
+        </div>
+
+        <div className="regeln-raster">
+          {SOULLINK_REGELN.map((regel, index) => (
+            <article className={`regel-karte ${regel.wichtig ? 'regel-karte--wichtig' : ''}`} id={`regel-${index + 1}`} key={regel.titel}>
+              <header>
+                <span className="regel-nummer">{String(index + 1).padStart(2, '0')}</span>
+                <span className="regel-symbol" aria-hidden="true">{regel.symbol}</span>
+                <div><small>{regel.wichtig ? 'KERNREGEL' : 'SOULLINK-REGEL'}</small><h2>{regel.titel}</h2></div>
+              </header>
+              <p>{regel.kurz}</p>
+              {regel.details.length > 0 && <ul>{regel.details.map((detail) => <li key={detail}>{detail}</li>)}</ul>}
+            </article>
+          ))}
+        </div>
+
+        <div className="regeln-abschluss"><span>♛</span><div><small>DAS GEMEINSAME ZIEL</small><strong>Besiegt den Champ – ohne eure Seelenpartner zurückzulassen.</strong></div></div>
+      </section>
+    </main>
+  )
+}
+
 function Pokedex({ zurueck }: { zurueck: () => void }) {
   const [suche, setSuche] = useState('')
   const [ausgewaehlt, setAusgewaehlt] = useState<number | null>(null)
@@ -1900,12 +2497,16 @@ function Pokedex({ zurueck }: { zurueck: () => void }) {
 }
 
 export default function App() {
-  type Seite = 'start' | 'pokedex' | 'teamplaner' | 'kampfberater'
+  type Seite = 'start' | 'pokedex' | 'teamplaner' | 'kampfberater' | 'regeln' | 'begegnungen' | 'begegnungstracker' | 'capwaechter'
 
   function seiteAusHash(): Seite {
     if (window.location.hash === '#pokedex') return 'pokedex'
     if (window.location.hash === '#teamplaner') return 'teamplaner'
     if (window.location.hash === '#kampfberater') return 'kampfberater'
+    if (window.location.hash === '#regeln') return 'regeln'
+    if (window.location.hash === '#begegnungen') return 'begegnungen'
+    if (window.location.hash === '#begegnungstracker') return 'begegnungstracker'
+    if (window.location.hash === '#capwaechter') return 'capwaechter'
     return 'start'
   }
 
@@ -1938,11 +2539,17 @@ export default function App() {
           pokedexOeffnen={() => wechseln('pokedex')}
           teamplanerOeffnen={() => wechseln('teamplaner')}
           kampfberaterOeffnen={() => wechseln('kampfberater')}
+          regelnOeffnen={() => wechseln('regeln')}
+          abenteuerplanOeffnen={() => wechseln('begegnungen')}
         />
       )}
       {seite === 'pokedex' && <Pokedex zurueck={() => wechseln('start')} />}
       {seite === 'teamplaner' && <Teamplaner zurueck={() => wechseln('start')} />}
       {seite === 'kampfberater' && <Kampfberater zurueck={() => wechseln('start')} teamplanerOeffnen={() => wechseln('teamplaner')} />}
+      {seite === 'regeln' && <Regeln zurueck={() => wechseln('start')} />}
+      {seite === 'begegnungen' && <AbenteuerPlan zurueck={() => wechseln('start')} />}
+      {seite === 'begegnungstracker' && <BegegnungsTracker zurueck={() => wechseln('start')} />}
+      {seite === 'capwaechter' && <CapWaechter zurueck={() => wechseln('start')} teamplanerOeffnen={() => wechseln('teamplaner')} />}
 
       <footer>
         <p>Inoffizielles, nicht kommerzielles Fanprojekt. Pokémon und zugehörige Namen sind Marken ihrer jeweiligen Rechteinhaber.</p>
