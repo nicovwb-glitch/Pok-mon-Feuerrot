@@ -5,10 +5,15 @@ import { ATTACKEN } from './moveData'
 import { ITEMS } from './itemData'
 
 const API = 'https://pokeapi.co/api/v2'
+const OFFLINE_DATEN = import.meta.env.VITE_OFFLINE_DATA === 'true'
+const offlineApiPfad = (url: string) => {
+  const pfad = new URL(url).pathname.replace(/^\/api\/v2\//, '').replace(/\/$/, '')
+  return `${import.meta.env.BASE_URL}offline-data/api/${pfad}.json`
+}
 const BILD = (id: number) =>
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
+  OFFLINE_DATEN ? `${import.meta.env.BASE_URL}offline-data/pokemon/${id}.png` : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
 const ITEM_BILD = (identifier: string) =>
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${identifier}.png`
+  OFFLINE_DATEN ? `${import.meta.env.BASE_URL}offline-data/items/${identifier}.png` : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${identifier}.png`
 
 type NamedResource = { name: string; url: string }
 type LocalizedName = { name: string; language: NamedResource }
@@ -153,16 +158,17 @@ const VERSION_RANG: Record<string, number> = {
 const apiCache = new Map<string, Promise<unknown>>()
 
 function laden<T>(url: string): Promise<T> {
-  if (!apiCache.has(url)) {
+  const ziel = OFFLINE_DATEN && url.startsWith(API) ? offlineApiPfad(url) : url
+  if (!apiCache.has(ziel)) {
     apiCache.set(
-      url,
-      fetch(url).then((antwort) => {
+      ziel,
+      fetch(ziel).then((antwort) => {
         if (!antwort.ok) throw new Error('Die Pokédex-Daten konnten nicht geladen werden.')
         return antwort.json()
       }),
     )
   }
-  return apiCache.get(url) as Promise<T>
+  return apiCache.get(ziel) as Promise<T>
 }
 
 function ressourcenId(resource: NamedResource | { url: string }) {

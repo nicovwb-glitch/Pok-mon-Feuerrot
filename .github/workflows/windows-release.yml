@@ -1,0 +1,39 @@
+name: Windows-App veröffentlichen
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Versionsnummer, zum Beispiel 1.0.0
+        required: true
+        default: 1.0.0
+
+permissions:
+  contents: write
+
+jobs:
+  windows-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Offline-Paket aus dem Cache laden
+        uses: actions/cache@v4
+        with:
+          path: public/offline-data
+          key: ${{ runner.os }}-feuerrot-offline-${{ hashFiles('scripts/build-offline-assets.mjs', 'src/itemData.ts') }}
+      - run: npm ci
+      - name: Offline-Daten und Windows-Installer bauen
+        run: npm run desktop:build
+      - name: GitHub Release veröffentlichen
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: desktop-v${{ inputs.version }}
+          name: Feuerrot Desktop v${{ inputs.version }}
+          body: |
+            Vollständige Windows-11-Desktop-App mit Offline-Daten und Desktop-Verknüpfung.
+            Lade die Setup-Datei herunter und führe sie aus.
+          files: release/*.exe

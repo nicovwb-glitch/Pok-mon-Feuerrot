@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build"
+    "build": "tsc -b && vite build",
+    "desktop:assets": "node scripts/build-offline-assets.mjs",
+    "desktop:build": "npm run desktop:assets && cross-env DESKTOP_BUILD=1 VITE_OFFLINE_DATA=true npm run build && electron-builder --win nsis --publish never"
   },
   "keywords": [],
   "author": "",
@@ -15,11 +17,30 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "@types/node": "^26.1.2",
+    "@types/node": "^24.0.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
+    "cross-env": "^10.1.0",
+    "electron": "^39.0.0",
+    "electron-builder": "^26.0.0",
     "typescript": "^5.9.3",
     "vite": "^8.2.0"
+  },
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "de.soullink.feuerrot",
+    "productName": "Feuerrot Abenteuer-Begleiter",
+    "directories": { "output": "release" },
+    "files": ["dist/**/*", "electron/**/*"],
+    "asar": true,
+    "win": { "target": "nsis", "icon": "public/pokeball-app-icon-512.png" },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Feuerrot Abenteuer-Begleiter"
+    }
   }
 }
