@@ -67,6 +67,10 @@ type MoveApi = {
   type: NamedResource
   power: number | null
   accuracy: number | null
+  pp: number | null
+  effect_chance: number | null
+  effect_entries: { short_effect: string; effect: string; language: NamedResource }[]
+  flavor_text_entries: { flavor_text: string; language: NamedResource; version_group: NamedResource }[]
 }
 type EvolutionDetail = {
   trigger: NamedResource
@@ -97,6 +101,8 @@ type LevelMove = {
   type: string
   power: number | null
   accuracy: number | null
+  pp: number | null
+  effect: string
 }
 type EvolutionStep = { fromId: number; toId: number; condition: string }
 type PokemonDetails = {
@@ -225,6 +231,32 @@ function fallbackName(name: string) {
     .split('-')
     .map((teil) => teil.charAt(0).toUpperCase() + teil.slice(1))
     .join(' ')
+}
+
+function attackenWirkung(attacke: MoveApi) {
+  const feuerrotText = attacke.flavor_text_entries?.find(
+    (eintrag) => eintrag.language.name === 'de' && eintrag.version_group.name === 'firered-leafgreen',
+  )?.flavor_text
+  const deutscherEffekt = attacke.effect_entries?.find((eintrag) => eintrag.language.name === 'de')?.short_effect
+  const text = feuerrotText ?? deutscherEffekt ?? 'Für diese Attacke ist keine deutsche Wirkungsbeschreibung hinterlegt.'
+  return text
+    .replace(/\$effect_chance/g, String(attacke.effect_chance ?? '—'))
+    .replace(/[\n\f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function attackeAufbereiten(attacke: MoveApi, level = 0): LevelMove {
+  return {
+    id: attacke.id,
+    name: deutsch(attacke.names, fallbackName(ATTACKEN.find((eintrag) => eintrag.id === attacke.id)?.identifier ?? 'Attacke')),
+    level,
+    type: attacke.type.name,
+    power: attacke.power,
+    accuracy: attacke.accuracy,
+    pp: attacke.pp,
+    effect: attackenWirkung(attacke),
+  }
 }
 
 async function lokalisierterRessourcenName(resource: NamedResource | null) {
@@ -357,14 +389,7 @@ async function detailsLaden(id: number): Promise<PokemonDetails> {
   const attacken: LevelMove[] = await Promise.all(
     levelAttacken.map(async ({ move, level }) => {
       const daten = await laden<MoveApi>(move.url)
-      return {
-        id: daten.id,
-        name: deutsch(daten.names, fallbackName(move.name)),
-        level,
-        type: daten.type.name,
-        power: daten.power,
-        accuracy: daten.accuracy,
-      }
+      return attackeAufbereiten(daten, level)
     }),
   )
 
@@ -756,15 +781,17 @@ function DetailFenster({ id, schliessen }: { id: number; schliessen: () => void 
                 {details.moves.length ? (
                   <div className="attacken-tabelle">
                     <div className="attacken-zeile attacken-zeile--kopf">
-                      <span>Level</span><span>Attacke</span><span>Typ</span><span>Stärke</span><span>Gen.</span>
+                      <span>Level</span><span>Attacke</span><span>Typ</span><span>Stärke</span><span>AP</span><span>Genauigkeit</span>
                     </div>
                     {details.moves.map((attacke) => (
                       <div className="attacken-zeile" key={`${attacke.name}-${attacke.level}`}>
                         <strong>{attacke.level === 0 ? 'Start' : attacke.level}</strong>
-                        <span>{attacke.name}</span>
+                        <span className="attacken-zeile__name">{attacke.name}</span>
                         <TypMarke typ={attacke.type} />
                         <span>{attacke.power ?? '—'}</span>
-                        <span>{attacke.accuracy ? `${attacke.accuracy} %` : '—'}</span>
+                        <span>{attacke.pp ?? '—'}</span>
+                        <span>{attacke.accuracy ? `${attacke.accuracy} %` : 'trifft immer'}</span>
+                        <p>{attacke.effect}</p>
                       </div>
                     ))}
                   </div>
@@ -1046,11 +1073,14 @@ function TeamKurzinfo({
         <h4>Alle Level-Attacken · aktuelles Level {level}</h4>
         <div>
           {details.moves.length ? details.moves.map((attacke) => (
-            <span className={attacke.level <= level ? 'attacke-verfuegbar' : 'attacke-spaeter'} key={`${attacke.name}-${attacke.level}`}>
-              <b>{attacke.level === 0 ? 'Start' : `Lv. ${attacke.level}`}</b>
-              {attacke.name}
-              <i>{attacke.level <= level ? '✓' : 'später'}</i>
-            </span>
+            <details className={attacke.level <= level ? 'attacke-verfuegbar' : 'attacke-spaeter'} key={`${attacke.name}-${attacke.level}`}>
+              <summary>
+                <b>{attacke.level === 0 ? 'Start' : `Lv. ${attacke.level}`}</b>
+                <span>{attacke.name}<small>AP {attacke.pp ?? '—'} · Genauigkeit {attacke.accuracy ? `${attacke.accuracy} %` : 'trifft immer'}</small></span>
+                <i>{attacke.level <= level ? 'ⓘ' : 'später'}</i>
+              </summary>
+              <p>{attacke.effect}</p>
+            </details>
           )) : <em>Keine Level-Attacken hinterlegt.</em>}
         </div>
       </div>
@@ -1519,14 +1549,7 @@ function basiswert(pokemon: PokemonDetails, name: string) {
 }
 
 function moveApiAlsAttacke(attacke: MoveApi): LevelMove {
-  return {
-    id: attacke.id,
-    name: deutsch(attacke.names, fallbackName(ATTACKEN.find((eintrag) => eintrag.id === attacke.id)?.identifier ?? 'Attacke')),
-    level: 0,
-    type: attacke.type.name,
-    power: attacke.power,
-    accuracy: attacke.accuracy,
-  }
+  return attackeAufbereiten(attacke)
 }
 
 async function attackenIdsLaden(ids: number[]) {
@@ -1607,6 +1630,35 @@ function TeamVorschau({
   )
 }
 
+function AusgewaehlteAttackenInfos({ ids }: { ids: number[] }) {
+  const [infos, setInfos] = useState<LevelMove[]>([])
+
+  useEffect(() => {
+    let aktiv = true
+    if (!ids.length) {
+      setInfos([])
+      return () => { aktiv = false }
+    }
+    void attackenIdsLaden(ids)
+      .then((daten) => { if (aktiv) setInfos(daten) })
+      .catch(() => { if (aktiv) setInfos([]) })
+    return () => { aktiv = false }
+  }, [ids.join(',')])
+
+  if (!ids.length) return null
+  return (
+    <div className="ausgewaehlte-attacken-infos">
+      {infos.map((attacke) => (
+        <article key={attacke.id}>
+          <header><strong>{attacke.name}</strong><TypMarke typ={attacke.type} /></header>
+          <small>AP {attacke.pp ?? '—'} · Stärke {attacke.power ?? '—'} · Genauigkeit {attacke.accuracy ? `${attacke.accuracy} %` : 'trifft immer'}</small>
+          <p>{attacke.effect}</p>
+        </article>
+      ))}
+    </div>
+  )
+}
+
 function AttackenAuswahl({
   pokemon,
   level,
@@ -1669,6 +1721,7 @@ function AttackenAuswahl({
             )
           }) : <p>Noch keine Attacke ausgewählt. Eine bis vier sind möglich.</p>}
         </div>
+        <AusgewaehlteAttackenInfos ids={ausgewaehlt} />
       </div>
 
       <div className="standard-attacken">
@@ -1681,7 +1734,9 @@ function AttackenAuswahl({
               onClick={() => ausgewaehlt.includes(attacke.id) ? onAendern(ausgewaehlt.filter((id) => id !== attacke.id)) : hinzufuegen(attacke.id)}
               disabled={!ausgewaehlt.includes(attacke.id) && ausgewaehlt.length >= 4}
             >
-              <b>{attacke.level === 0 ? 'Start' : `Lv. ${attacke.level}`}</b>{attacke.name}<i>{ausgewaehlt.includes(attacke.id) ? '✓' : '+'}</i>
+              <b>{attacke.level === 0 ? 'Start' : `Lv. ${attacke.level}`}</b>
+              <span><strong>{attacke.name}</strong><small>AP {attacke.pp ?? '—'} · Gen. {attacke.accuracy ? `${attacke.accuracy} %` : 'trifft immer'}</small><em>{attacke.effect}</em></span>
+              <i>{ausgewaehlt.includes(attacke.id) ? '✓' : '+'}</i>
             </button>
           )) : <p>Für dieses Level wurde keine Level-Attacke gefunden. Du kannst unten frei suchen.</p>}
         </div>
@@ -1842,9 +1897,11 @@ function Kampfberater({
                     {empfehlung.attacke && <TypMarke typ={empfehlung.attacke.type} />}
                     <dl>
                       <div><dt>Stärke</dt><dd>{empfehlung.attacke?.power ?? '—'}</dd></div>
+                      <div><dt>AP</dt><dd>{empfehlung.attacke?.pp ?? '—'}</dd></div>
                       <div><dt>Genauigkeit</dt><dd>{empfehlung.attacke?.accuracy ? `${empfehlung.attacke.accuracy} %` : '—'}</dd></div>
                       <div><dt>Typwirkung</dt><dd>×{empfehlung.effektivitaet}</dd></div>
                     </dl>
+                    {empfehlung.attacke && <p className="attacken-wirkung"><strong>Wirkung:</strong> {empfehlung.attacke.effect}</p>}
                     <p>{empfehlung.effektivitaet > 1 ? 'Die Attacke trifft sehr effektiv.' : empfehlung.effektivitaet < 1 ? 'Es gibt keine stärkere bereits erlernbare Alternative im Team.' : 'Die Attacke bietet den besten Gesamtwert aus Typ, Stärke und Basiswerten.'} {empfehlung.gefahr <= 1 ? `${empfehlung.pokemon.name} besitzt außerdem eine günstige defensive Typenlage.` : 'Achte trotzdem auf einen möglichen Typennachteil beim Gegenangriff.'}</p>
                   </div>
                 </div>
@@ -2634,7 +2691,7 @@ function Regeln({ zurueck }: { zurueck: () => void }) {
 function Pokedex({ zurueck }: { zurueck: () => void }) {
   const [suche, setSuche] = useState('')
   const [ausgewaehlt, setAusgewaehlt] = useState<number | null>(null)
-  const [umfang, setUmfang] = useState<'kanto' | 'national'>('kanto')
+  const [umfang, setUmfang] = useState<'kanto' | 'national'>('national')
 
   const gefiltert = useMemo(() => {
     const begriff = suchText(suche.trim().replace(/^#/, ''))
@@ -2968,8 +3025,37 @@ function EinstellungsMenue({
   )
 }
 
+type Seite = 'start' | 'pokedex' | 'teamplaner' | 'kampfberater' | 'regeln' | 'begegnungen' | 'begegnungstracker' | 'capwaechter'
+
+const DIREKTE_BEREICHE: { seite: Seite; symbol: string; name: string }[] = [
+  { seite: 'pokedex', symbol: '◉', name: 'Pokédex' },
+  { seite: 'teamplaner', symbol: '↔', name: 'Teamplaner' },
+  { seite: 'kampfberater', symbol: '⚔', name: 'Kampfberater' },
+  { seite: 'begegnungstracker', symbol: '⌖', name: 'Encounter' },
+  { seite: 'regeln', symbol: '§', name: 'Regeln' },
+  { seite: 'begegnungen', symbol: '✓', name: 'Abenteuerplan' },
+]
+
+function BereichNavigation({ aktiv, wechseln }: { aktiv: Seite; wechseln: (seite: Seite) => void }) {
+  return (
+    <nav className="bereich-nav" aria-label="Direkt zu einem anderen Bereich">
+      <div>
+        {DIREKTE_BEREICHE.map((bereich) => (
+          <button
+            className={aktiv === bereich.seite ? 'aktiv' : ''}
+            key={bereich.seite}
+            onClick={() => wechseln(bereich.seite)}
+            aria-current={aktiv === bereich.seite ? 'page' : undefined}
+          >
+            <span aria-hidden="true">{bereich.symbol}</span>{bereich.name}
+          </button>
+        ))}
+      </div>
+    </nav>
+  )
+}
+
 export default function App() {
-  type Seite = 'start' | 'pokedex' | 'teamplaner' | 'kampfberater' | 'regeln' | 'begegnungen' | 'begegnungstracker' | 'capwaechter'
 
   function seiteAusHash(): Seite {
     if (window.location.hash === '#pokedex') return 'pokedex'
@@ -3043,6 +3129,7 @@ export default function App() {
         </div>
         <span className="datenhinweis">Daten: PokéAPI · Fanprojekt</span>
       </nav>}
+      {seite !== 'start' && <BereichNavigation aktiv={seite} wechseln={wechseln} />}
 
       <EinstellungsMenue offen={menueOffen} schliessen={() => setMenueOffen(false)} design={design} designAendern={setDesign} />
       {ballAuswahlOffen && <div className="ball-dialog-hintergrund" onMouseDown={() => setBallAuswahlOffen(false)}><section className="ball-dialog" role="dialog" aria-modal="true" aria-labelledby="ball-dialog-titel" onMouseDown={(event) => event.stopPropagation()}><header><div><span>LOGO AUSWÄHLEN</span><h2 id="ball-dialog-titel">Dein Pokéball</h2></div><button onClick={() => setBallAuswahlOffen(false)} aria-label="Auswahl schließen">×</button></header><div>{([{ id: 'poke', name: 'Pokéball' }, { id: 'super', name: 'Superball' }, { id: 'hyper', name: 'Hyperball' }, { id: 'meister', name: 'Meisterball' }, { id: 'premier', name: 'Premierball' }] as { id: BallLogo; name: string }[]).map((ball) => <button className={design.ball === ball.id ? 'aktiv' : ''} data-vorschau-ball={ball.id} key={ball.id} onClick={() => { setDesign({ ...design, ball: ball.id }); setBallAuswahlOffen(false) }}><span className="ball-vorschau"><i /></span><strong>{ball.name}</strong></button>)}</div></section></div>}

@@ -1,5 +1,5 @@
 .app { min-height: 100vh; overflow: hidden; }
-.hauptnav { height: 64px; padding: 0 clamp(20px, 5vw, 76px); display: flex; align-items: center; justify-content: space-between; background: rgba(255,253,247,.94); border-bottom: 1px solid var(--linie); position: relative; z-index: 20; }
+.hauptnav { height: 64px; padding: 0 clamp(20px, 5vw, 76px); display: flex; align-items: center; justify-content: space-between; background: rgba(255,253,247,.94); border-bottom: 1px solid var(--linie); position: sticky; top: 0; z-index: 45; backdrop-filter: blur(12px); }
 .hauptnav__links { display: flex; align-items: center; gap: 15px; }
 .menue-knopf { width: 40px; height: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 0; border: 1px solid var(--linie); border-radius: 50%; background: var(--papier); cursor: pointer; transition: .18s ease; }
 .menue-knopf:hover { border-color: var(--rot); transform: translateY(-1px); }
@@ -11,6 +11,13 @@
 .marke__ball { width: 37px; height: 37px; border: 3px solid var(--tinte); border-radius: 50%; background: linear-gradient(var(--rot) 0 45%, var(--tinte) 45% 55%, #fff 55%); position: relative; }
 .marke__ball i { position: absolute; width: 11px; height: 11px; border: 3px solid var(--tinte); border-radius: 50%; background: #fff; inset: 0; margin: auto; }
 .datenhinweis { font-size: 12px; color: var(--grau); }
+.bereich-nav { min-height: 52px; position: sticky; top: 64px; z-index: 44; display: grid; place-items: center; padding: 6px 18px; border-bottom: 1px solid var(--linie); background: color-mix(in srgb, var(--papier) 94%, transparent); backdrop-filter: blur(12px); }
+.bereich-nav > div { width: min(1050px, 100%); display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+.bereich-nav button { min-width: 0; height: 39px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--grau); cursor: pointer; font-size: 10px; font-weight: 800; white-space: nowrap; transition: .16s ease; }
+.bereich-nav button span { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--creme); color: var(--rot); font-size: 12px; }
+.bereich-nav button:hover { border-color: var(--linie); color: var(--tinte); background: var(--creme); }
+.bereich-nav button.aktiv { background: var(--akzent-weich); color: var(--rot-dunkel); }
+.bereich-nav button.aktiv span { background: var(--rot); color: #fff; }
 
 .menue-hintergrund { position: fixed; inset: 0; z-index: 150; background: rgba(8,19,14,.7); backdrop-filter: blur(4px); animation: menue-einblenden .18s ease; }
 .seitenmenue { width: min(430px, calc(100% - 26px)); height: 100%; overflow-y: auto; background: var(--creme); color: var(--tinte); box-shadow: 24px 0 65px rgba(0,0,0,.3); animation: menue-einschieben .22s ease; }
@@ -422,12 +429,17 @@
 .team-kurzinfo .matchup-gruppe { background: rgba(255,255,255,.06); }
 .kurz-attacken { margin-top: 12px; padding: 18px; background: rgba(255,255,255,.06); }
 .kurz-attacken h4 { margin: 0 0 12px; font: 700 14px 'Outfit'; }
-.kurz-attacken > div { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; max-height: 180px; overflow-y: auto; }
-.kurz-attacken span { display: flex; gap: 8px; align-items: center; padding: 7px 8px; background: rgba(255,255,255,.06); font-size: 11px; }
+.kurz-attacken > div { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 300px; overflow-y: auto; }
+.kurz-attacken details { min-width: 0; background: rgba(255,255,255,.06); font-size: 11px; }
+.kurz-attacken summary { min-height: 49px; display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; padding: 7px 8px; cursor: pointer; list-style: none; }
+.kurz-attacken summary::-webkit-details-marker { display: none; }
+.kurz-attacken summary > span { min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+.kurz-attacken summary > span small { margin-top: 3px; color: rgba(255,255,255,.55); font-size: 8px; white-space: nowrap; }
 .kurz-attacken b { color: #f4c85d; font-size: 9px; white-space: nowrap; }
-.kurz-attacken span i { margin-left: auto; color: #6ed39e; font-size: 9px; font-style: normal; }
-.kurz-attacken span.attacke-spaeter { opacity: .48; }
-.kurz-attacken span.attacke-spaeter i { color: rgba(255,255,255,.7); }
+.kurz-attacken summary i { margin-left: auto; color: #6ed39e; font-size: 9px; font-style: normal; }
+.kurz-attacken details > p { margin: 0; padding: 0 10px 10px; color: rgba(255,255,255,.72); font-size: 9px; line-height: 1.5; }
+.kurz-attacken details.attacke-spaeter { opacity: .48; }
+.kurz-attacken details.attacke-spaeter i { color: rgba(255,255,255,.7); }
 .kurz-attacken em { color: rgba(255,255,255,.6); font-size: 12px; }
 .team-attacken-editor { margin-top: 16px; padding-top: 19px; border-top: 1px solid rgba(255,255,255,.13); }
 .team-attacken-editor > h4 { margin: 0 0 5px; font: 700 18px 'Outfit'; }
@@ -555,10 +567,21 @@
 .attacken-auswahl__gewaehlt > div > span { display: inline-flex; align-items: center; gap: 10px; padding: 8px 8px 8px 12px; background: rgba(255,255,255,.1); font-size: 12px; font-weight: 700; }
 .attacken-auswahl__gewaehlt > div > span button { width: 23px; height: 23px; border: 0; border-radius: 50%; background: rgba(255,255,255,.15); color: #fff; cursor: pointer; font-size: 17px; line-height: 1; }
 .attacken-auswahl__gewaehlt p { margin: 5px 0; color: rgba(255,255,255,.55); font-size: 11px; }
+.ausgewaehlte-attacken-infos { width: 100%; display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px !important; margin-top: 11px; }
+.ausgewaehlte-attacken-infos article { min-width: 0; padding: 11px; background: rgba(255,255,255,.07); border-left: 3px solid var(--rot); }
+.ausgewaehlte-attacken-infos header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ausgewaehlte-attacken-infos header strong { font-size: 11px; }
+.ausgewaehlte-attacken-infos .typ { padding: 4px 7px; font-size: 7px; }
+.ausgewaehlte-attacken-infos article > small { display: block; margin-top: 6px; color: #f4c85d; font-size: 8px; }
+.ausgewaehlte-attacken-infos article > p { margin: 6px 0 0; color: rgba(255,255,255,.68); font-size: 9px; line-height: 1.45; }
 .standard-attacken { padding: 18px; border: 1px solid var(--linie); background: #f5f3ec; }
 .standard-attacken > div { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; }
-.standard-attacken > div > button { min-width: 0; min-height: 44px; display: grid; grid-template-columns: 52px 1fr 22px; align-items: center; gap: 7px; border: 1px solid #d5d5ce; background: #fff; padding: 7px; color: var(--tinte); cursor: pointer; text-align: left; font-size: 11px; font-weight: 700; }
+.standard-attacken > div > button { min-width: 0; min-height: 86px; display: grid; grid-template-columns: 46px 1fr 22px; align-items: center; gap: 7px; border: 1px solid #d5d5ce; background: #fff; padding: 8px; color: var(--tinte); cursor: pointer; text-align: left; font-size: 11px; font-weight: 700; }
 .standard-attacken > div > button b { color: var(--rot); font-size: 8px; text-transform: uppercase; }
+.standard-attacken > div > button > span { min-width: 0; display: flex; flex-direction: column; }
+.standard-attacken > div > button > span strong { font-size: 11px; }
+.standard-attacken > div > button > span small { margin-top: 3px; color: var(--grau); font-size: 8px; }
+.standard-attacken > div > button > span em { margin-top: 5px; color: var(--grau); font-size: 8px; font-style: normal; font-weight: 500; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .standard-attacken > div > button i { width: 21px; height: 21px; display: grid; place-items: center; border-radius: 50%; background: #e8e7e0; font-style: normal; }
 .standard-attacken > div > button.ausgewaehlt { border-color: var(--gruen); background: #e8f1eb; }
 .standard-attacken > div > button.ausgewaehlt i { background: var(--gruen); color: #fff; }
@@ -665,11 +688,15 @@
 .matchup-gruppe h4 { margin: 0 0 14px; font: 700 14px 'Outfit'; }
 .keine-angabe { color: var(--grau); font-size: 12px; }
 .attacken-tabelle { border: 1px solid var(--linie); }
-.attacken-zeile { display: grid; grid-template-columns: 70px minmax(120px, 1.5fr) minmax(80px, 1fr) 70px 70px; align-items: center; min-height: 50px; padding: 6px 15px; border-bottom: 1px solid #e4e4dd; font-size: 13px; gap: 8px; }
+.attacken-zeile { display: grid; grid-template-columns: 62px minmax(135px, 1.4fr) minmax(82px, .8fr) 62px 48px 90px; align-items: center; min-height: 66px; padding: 9px 15px; border-bottom: 1px solid #e4e4dd; font-size: 12px; gap: 8px; }
 .attacken-zeile:last-child { border-bottom: 0; }
 .attacken-zeile--kopf { min-height: 38px; background: #e9e8e1; color: var(--grau); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
 .attacken-zeile > strong { color: var(--rot); }
+.attacken-zeile__name { font-weight: 800; }
+.attacken-zeile > p { grid-column: 2 / -1; margin: -2px 0 3px; color: var(--grau); font-size: 10px; line-height: 1.45; }
 .attacken-zeile .typ { justify-self: start; }
+.beste-empfehlung__zug .attacken-wirkung { margin: 18px 0 0; padding: 12px 14px; border-left: 3px solid #f4c85d; background: rgba(255,255,255,.07); }
+.beste-empfehlung__zug .attacken-wirkung strong { color: #f4c85d; }
 .entwicklung-liste { display: grid; gap: 12px; }
 .entwicklung { display: grid; grid-template-columns: 140px 1fr 140px; align-items: center; border: 1px solid var(--linie); padding: 14px; gap: 15px; }
 .entwicklung > div { display: flex; align-items: center; gap: 10px; font: 700 13px 'Outfit'; }
@@ -772,6 +799,10 @@
 .kanto-karte > div small { margin-top: 5px; color: var(--grau); font-size: 10px; }
 
 [data-theme='dark'] .hauptnav { background: rgba(27,36,31,.96); }
+[data-theme='dark'] .bereich-nav { background: rgba(27,36,31,.96); }
+[data-theme='dark'] .bereich-nav button span { background: #111713; }
+[data-theme='dark'] .bereich-nav button:hover { background: #252f29; }
+[data-theme='dark'] .bereich-nav button.aktiv { background: color-mix(in srgb, var(--rot) 22%, #1b241f); color: #fff; }
 [data-theme='dark'] .start-werkzeugleiste .marke__ball,
 [data-theme='dark'] .hauptnav .marke__ball { border-color: #eef4f0; background: linear-gradient(var(--rot) 0 45%, #eef4f0 45% 55%, #fff 55%); box-shadow: 0 0 0 3px rgba(255,255,255,.08); }
 [data-theme='dark'] .start-werkzeugleiste .marke__ball i,
@@ -1005,6 +1036,9 @@ footer p { margin: 0; }
   .encounter-abschnitt > div { grid-template-columns: 1fr; }
   .encounter-zeile:nth-child(odd) { border-right: 0; }
   .hauptnav { height: 66px; padding: 0 16px; }
+  .bereich-nav { top: 66px; display: block; min-height: 50px; overflow-x: auto; padding: 5px 10px; scrollbar-width: thin; }
+  .bereich-nav > div { width: max-content; display: flex; gap: 5px; }
+  .bereich-nav button { width: 124px; flex: 0 0 auto; }
   .start-werkzeugleiste { padding: 10px 12px; align-items: flex-start; }
   .start-werkzeugleiste .hauptnav__links { gap: 9px; }
   .start-werkzeugleiste .marke small, .start-werkzeugleiste .status { display: none; }
@@ -1061,7 +1095,7 @@ footer p { margin: 0; }
   .matchup-raster { grid-template-columns: 1fr; gap: 12px; }
   .wert { grid-template-columns: 105px 1fr 32px; gap: 8px; }
   .attacken-tabelle { overflow-x: auto; }
-  .attacken-zeile { min-width: 560px; }
+  .attacken-zeile { min-width: 760px; }
   .entwicklung { grid-template-columns: 1fr; text-align: center; }
   .entwicklung > div { justify-content: center; }
   .entwicklung > span { flex-direction: column; gap: 3px; }
@@ -1103,7 +1137,7 @@ footer p { margin: 0; }
   .team-kurzinfo__kopf img { width: 72px; height: 72px; }
   .team-kurzinfo__kopf h4 { font-size: 22px; }
   .team-kurzinfo__matchups { grid-template-columns: 1fr; }
-  .kurz-attacken > div { grid-template-columns: 1fr 1fr; }
+  .kurz-attacken > div, .ausgewaehlte-attacken-infos { grid-template-columns: 1fr; }
   .mini-paar { grid-template-columns: 1fr 35px 1fr; }
   .mini-paar img { width: 43px; height: 43px; }
   .mini-paar button span { font-size: 10px; }

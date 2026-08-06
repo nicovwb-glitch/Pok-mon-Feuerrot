@@ -1,6 +1,6 @@
 {
   "name": "pokemon-feuerrot-paket",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Testumgebung für die Pokémon-Feuerrot-App",
   "type": "module",
   "scripts": {
@@ -31,10 +31,18 @@
   "build": {
     "appId": "de.soullink.feuerrot",
     "productName": "Feuerrot Abenteuer-Begleiter",
-    "directories": { "output": "release" },
-    "files": ["dist/**/*", "electron/**/*"],
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
     "asar": true,
-    "win": { "target": "nsis", "icon": "public/pokeball-app-icon-512.png" },
+    "win": {
+      "target": "nsis",
+      "icon": "public/pokeball-app-icon-512.png"
+    },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
