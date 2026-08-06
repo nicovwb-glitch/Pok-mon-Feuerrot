@@ -68,6 +68,9 @@ for (const pokemon of pokemonDaten.values()) {
 }
 for (const species of speciesDaten.values()) if (species.evolution_chain?.url) API_URLS.add(species.evolution_chain.url)
 for (let id = 1; id <= 354; id += 1) API_URLS.add(`${API}/move/${id}`)
+const itemQuelle = await readFile(path.join(ROOT, 'src', 'itemData.ts'), 'utf8')
+const itemNamen = [...itemQuelle.matchAll(/"identifier"\s*:\s*"([^"]+)"/g)].map((treffer) => treffer[1])
+for (const name of itemNamen) API_URLS.add(`${API}/item/${name}`)
 
 console.log(`Lade ${API_URLS.size} verknüpfte API-Datensätze …`)
 const ersteRunde = [...API_URLS]
@@ -91,9 +94,10 @@ await pool(zweiteRunde, 12, jsonSpeichern)
 console.log('Lade Pokémon-Bilder …')
 await pool(Array.from({ length: 386 }, (_, i) => i + 1), 10, (id) => bildSpeichern(`${SPRITES}/pokemon/other/official-artwork/${id}.png`, path.join(ZIEL, 'pokemon', `${id}.png`)))
 
-const itemQuelle = await readFile(path.join(ROOT, 'src', 'itemData.ts'), 'utf8')
-const itemNamen = [...itemQuelle.matchAll(/"identifier"\s*:\s*"([^"]+)"/g)].map((treffer) => treffer[1])
 console.log(`Lade ${itemNamen.length} Itembilder …`)
 await pool(itemNamen, 12, (name) => bildSpeichern(`${SPRITES}/items/${name}.png`, path.join(ZIEL, 'items', `${name}.png`), true))
+const maschinenTypen = ['normal', 'fighting', 'flying', 'poison', 'ground', 'rock', 'ghost', 'steel', 'fire', 'water', 'grass', 'electric', 'psychic', 'ice', 'dragon', 'dark']
+console.log('Lade typabhängige TM- und VM-Bilder …')
+await pool(maschinenTypen, 8, (typ) => bildSpeichern(`${SPRITES}/items/tm-${typ}.png`, path.join(ZIEL, 'items', `tm-${typ}.png`)))
 
 console.log('Offline-Datenpaket vollständig.')

@@ -12,7 +12,7 @@
 .marke__ball i { position: absolute; width: 11px; height: 11px; border: 3px solid var(--tinte); border-radius: 50%; background: #fff; inset: 0; margin: auto; }
 .datenhinweis { font-size: 12px; color: var(--grau); }
 .bereich-nav { min-height: 52px; position: sticky; top: 64px; z-index: 44; display: grid; place-items: center; padding: 6px 18px; border-bottom: 1px solid var(--linie); background: color-mix(in srgb, var(--papier) 94%, transparent); backdrop-filter: blur(12px); }
-.bereich-nav > div { width: min(1050px, 100%); display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+.bereich-nav > div { width: min(1320px, 100%); display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
 .bereich-nav button { min-width: 0; height: 39px; display: flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--grau); cursor: pointer; font-size: 10px; font-weight: 800; white-space: nowrap; transition: .16s ease; }
 .bereich-nav button span { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--creme); color: var(--rot); font-size: 12px; }
 .bereich-nav button:hover { border-color: var(--linie); color: var(--tinte); background: var(--creme); }
@@ -431,12 +431,13 @@
 .kurz-attacken h4 { margin: 0 0 12px; font: 700 14px 'Outfit'; }
 .kurz-attacken > div { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; max-height: 300px; overflow-y: auto; }
 .kurz-attacken details { min-width: 0; background: rgba(255,255,255,.06); font-size: 11px; }
-.kurz-attacken summary { min-height: 49px; display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; padding: 7px 8px; cursor: pointer; list-style: none; }
+.kurz-attacken summary { min-height: 49px; display: grid; grid-template-columns: auto minmax(0,1fr) auto auto; gap: 8px; align-items: center; padding: 7px 8px; cursor: pointer; list-style: none; }
 .kurz-attacken summary::-webkit-details-marker { display: none; }
 .kurz-attacken summary > span { min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
 .kurz-attacken summary > span small { margin-top: 3px; color: rgba(255,255,255,.55); font-size: 8px; white-space: nowrap; }
 .kurz-attacken b { color: #f4c85d; font-size: 9px; white-space: nowrap; }
 .kurz-attacken summary i { margin-left: auto; color: #6ed39e; font-size: 9px; font-style: normal; }
+.kurz-attacken summary > .typ { padding: 4px 6px; font-size: 7px; }
 .kurz-attacken details > p { margin: 0; padding: 0 10px 10px; color: rgba(255,255,255,.72); font-size: 9px; line-height: 1.5; }
 .kurz-attacken details.attacke-spaeter { opacity: .48; }
 .kurz-attacken details.attacke-spaeter i { color: rgba(255,255,255,.7); }
@@ -546,6 +547,87 @@
 .beste-empfehlung__zug dt { color: rgba(255,255,255,.5); font-size: 8px; font-weight: 800; text-transform: uppercase; }
 .beste-empfehlung__zug dd { margin: 4px 0 0; font: 700 17px 'Outfit'; }
 .beste-empfehlung__zug p { color: rgba(255,255,255,.68); line-height: 1.6; font-size: 13px; }
+.schadens-vorschau { margin-top: 18px; padding: 25px; border: 1px solid var(--linie); background: var(--creme); }
+.schadens-vorschau > header { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 15px; }
+.schadens-vorschau > header small { color: var(--rot); font-size: 8px; font-weight: 800; letter-spacing: .12em; }
+.schadens-vorschau > header h3 { margin: 4px 0 0; font: 700 25px/1 'Outfit'; }
+.schadens-vorschau > header > span { color: var(--grau); font-size: 8px; }
+.schadens-attacken { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; }
+.schadens-attacken button { min-width: 0; min-height: 68px; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 7px; padding: 8px; border: 1px solid var(--linie); background: var(--papier); color: var(--tinte); cursor: pointer; text-align: left; }
+.schadens-attacken button:hover { border-color: var(--rot); }
+.schadens-attacken button.aktiv { border-color: var(--rot); background: var(--akzent-weich); box-shadow: inset 0 -3px var(--rot); }
+.schadens-attacken button .typ { padding: 6px 7px; font-size: 7px; }
+.schadens-attacken button > span { min-width: 0; display: flex; flex-direction: column; }
+.schadens-attacken button strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.schadens-attacken button small { margin-top: 4px; overflow: hidden; color: var(--grau); font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
+.schadens-anzeige { margin-top: 10px; padding: 18px; background: #17211c; color: #fff; }
+.schadens-gegner { display: grid; grid-template-columns: 58px 1fr auto; align-items: center; gap: 10px; }
+.schadens-gegner img { width: 56px; height: 56px; object-fit: contain; }
+.schadens-gegner > div { display: flex; flex-direction: column; }
+.schadens-gegner small { color: #f4c85d; font-size: 7px; font-weight: 800; letter-spacing: .08em; }
+.schadens-gegner strong { margin-top: 2px; font: 700 19px 'Outfit'; }
+.schadens-gegner > b { color: rgba(255,255,255,.65); font-size: 10px; }
+.schadens-kp-kopf { display: flex; justify-content: space-between; margin: 13px 0 6px; color: rgba(255,255,255,.58); font-size: 8px; font-weight: 800; text-transform: uppercase; }
+.schadens-kp-kopf strong { color: #fff; }
+.schadens-kp-leiste { width: 100%; height: 27px; display: flex; overflow: hidden; border: 3px solid #fff; border-radius: 14px; background: #253029; box-shadow: 0 0 0 2px rgba(0,0,0,.35); }
+.schadens-kp-leiste i, .schadens-kp-leiste em, .schadens-kp-leiste b { display: block; height: 100%; transition: width .28s ease; }
+.schadens-kp-leiste i { background: linear-gradient(#69d675, #39a856); }
+.schadens-kp-leiste em { background: linear-gradient(#f4cb54, #d99c27); }
+.schadens-kp-leiste b { background: linear-gradient(#ec6b5e, #bd3f39); }
+.schadens-legende { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 8px; color: rgba(255,255,255,.48); font-size: 7px; }
+.schadens-legende span { display: flex; align-items: center; gap: 4px; }
+.schadens-legende i { width: 8px; height: 8px; border-radius: 50%; background: #39a856; }
+.schadens-legende span:nth-child(2) i { background: #d99c27; }
+.schadens-legende span:nth-child(3) i { background: #bd3f39; }
+.schadens-werte { display: grid; grid-template-columns: 1fr 1.35fr; gap: 7px; margin-top: 15px; }
+.schadens-werte > div { padding: 11px; display: flex; flex-direction: column; background: rgba(255,255,255,.07); }
+.schadens-werte small { color: rgba(255,255,255,.42); font-size: 6px; font-weight: 800; }
+.schadens-werte strong { margin-top: 3px; font: 700 15px 'Outfit'; }
+.schadens-werte span { margin-top: 3px; color: #f4c85d; font-size: 7px; }
+.schadens-statuswirkung { margin-top: 15px; padding: 15px; background: rgba(255,255,255,.07); text-align: left; }
+.schadens-statuswirkung > span { color: #f4c85d; font-size: 7px; font-weight: 800; letter-spacing: .1em; }
+.schadens-statuswirkung h4 { margin: 4px 0 6px; font: 700 18px 'Outfit'; }
+.schadens-statuswirkung > p { margin: 0; color: rgba(255,255,255,.62); font-size: 9px; line-height: 1.5; }
+.schadens-statuswirkung dl { margin: 13px 0 0; display: grid; grid-template-columns: repeat(3, 1fr); }
+.schadens-statuswirkung dl div { padding: 7px 9px; border-left: 1px solid rgba(255,255,255,.12); }
+.schadens-statuswirkung dt { color: rgba(255,255,255,.42); font-size: 6px; font-weight: 800; text-transform: uppercase; }
+.schadens-statuswirkung dd { margin: 4px 0 0; font: 700 10px 'Outfit'; }
+.schadens-statuswirkung .typ { padding: 4px 7px; font-size: 7px; }
+.schadens-effektchancen { margin-top: 10px; padding: 12px; border: 1px solid rgba(244,200,93,.18); background: rgba(244,200,93,.07); text-align: left; }
+.schadens-effektchancen > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.schadens-effektchancen > header span { color: #f4c85d; font-size: 6px; font-weight: 800; letter-spacing: .11em; }
+.schadens-effektchancen > header strong { color: rgba(255,255,255,.58); font-size: 8px; }
+.schadens-effektchancen > div { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 6px; }
+.schadens-effektchancen article { min-width: 0; display: grid; grid-template-columns: 35px 1fr; align-items: center; gap: 8px; padding: 8px; background: rgba(255,255,255,.07); }
+.schadens-effektchancen article > i { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: #f4c85d; color: #352b14; font: 800 11px 'Outfit'; font-style: normal; }
+.schadens-effektchancen article > span { min-width: 0; display: flex; flex-direction: column; }
+.schadens-effektchancen article small { color: rgba(255,255,255,.55); font-size: 6px; font-weight: 800; text-transform: uppercase; }
+.schadens-effektchancen article strong { margin-top: 2px; color: #fff; font: 700 12px 'Outfit'; }
+.schadens-effektchancen article em { margin-top: 2px; overflow: hidden; color: #f4c85d; font-size: 6px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+.schadens-anzeige > p { margin: 12px 0 0; color: rgba(255,255,255,.4); font-size: 7px; line-height: 1.45; }
+.schadens-vorschau__leer { margin: 0; padding: 18px; border: 1px dashed var(--linie); color: var(--grau); font-size: 10px; text-align: center; }
+.gegner-schadens-vorschau { margin-top: 12px; padding: 25px; border: 1px solid var(--linie); border-top: 5px solid #b8473d; background: var(--papier); }
+.gegner-schadens-vorschau > header { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+.gegner-schadens-vorschau > header small { color: #c65046; font-size: 8px; font-weight: 800; letter-spacing: .12em; }
+.gegner-schadens-vorschau > header h3 { margin: 4px 0 0; font: 700 25px/1 'Outfit'; }
+.gegner-schadens-vorschau > header > span { color: var(--grau); font-size: 8px; }
+.gegner-attacken-kopf { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 7px; color: var(--grau); font-size: 8px; }
+.gegner-attacken-kopf strong { color: var(--tinte); font-size: 9px; }
+.gegner-schadens-attacken button.aktiv { border-color: #b8473d; background: #f4dfdc; box-shadow: inset 0 -3px #b8473d; }
+.gegner-attacken-mehr { display: block; margin: 9px auto 0; padding: 7px 12px; border: 1px solid var(--linie); background: transparent; color: var(--grau); cursor: pointer; font-size: 8px; font-weight: 800; }
+.gegner-attacken-mehr:hover { border-color: #b8473d; color: #b8473d; }
+.schadens-anzeige--gefahr { border-top: 4px solid #b8473d; }
+.schadens-risiko--hoch { background: rgba(184,71,61,.25) !important; }
+.schadens-risiko--hoch strong { color: #ff9e94; }
+.gegner-attacke-suche { position: relative; margin-top: 12px; }
+.gegner-attacke-suche > label { display: block; margin-bottom: 6px; color: var(--grau); font-size: 8px; font-weight: 800; text-transform: uppercase; }
+.gegner-attacke-suche > input { width: 100%; height: 46px; padding: 0 13px; border: 1px solid var(--linie); background: var(--creme); color: var(--tinte); outline: 0; }
+.gegner-attacke-suche > input:focus { border-color: #b8473d; }
+.gegner-attacke-suche > div { position: absolute; z-index: 12; top: 70px; left: 0; right: 0; max-height: 250px; overflow-y: auto; border: 1px solid var(--linie); background: var(--papier); box-shadow: 0 15px 35px rgba(23,33,28,.18); }
+.gegner-attacke-suche > div button { width: 100%; min-height: 42px; padding: 7px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border: 0; border-bottom: 1px solid var(--linie); background: var(--papier); color: var(--tinte); cursor: pointer; text-align: left; }
+.gegner-attacke-suche > div button:hover { background: var(--creme); }
+.gegner-attacke-suche > div span { font-size: 10px; font-weight: 800; }
+.gegner-attacke-suche > div small { color: #b8473d; font-size: 7px; }
 .alternativen { margin-top: 28px; }
 .alternativen > h3 { font: 700 20px 'Outfit'; }
 .alternativen > div { display: grid; grid-template-columns: 32px 58px 1fr 1fr 110px; align-items: center; gap: 12px; min-height: 70px; border-top: 1px solid var(--linie); }
@@ -580,6 +662,7 @@
 .standard-attacken > div > button b { color: var(--rot); font-size: 8px; text-transform: uppercase; }
 .standard-attacken > div > button > span { min-width: 0; display: flex; flex-direction: column; }
 .standard-attacken > div > button > span strong { font-size: 11px; }
+.standard-attacken > div > button > span .typ { align-self: flex-start; margin-top: 4px; padding: 3px 6px; font-size: 7px; }
 .standard-attacken > div > button > span small { margin-top: 3px; color: var(--grau); font-size: 8px; }
 .standard-attacken > div > button > span em { margin-top: 5px; color: var(--grau); font-size: 8px; font-style: normal; font-weight: 500; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .standard-attacken > div > button i { width: 21px; height: 21px; display: grid; place-items: center; border-radius: 50%; background: #e8e7e0; font-style: normal; }
@@ -610,6 +693,159 @@
 .nachpruefung dl div { padding: 10px; background: rgba(255,255,255,.07); }
 .nachpruefung dt { color: rgba(255,255,255,.48); font-size: 8px; font-weight: 800; text-transform: uppercase; }
 .nachpruefung dd { margin: 4px 0 0; font: 700 13px 'Outfit'; }
+
+.fangchance-seite { min-height: calc(100vh - 64px); background: var(--creme); color: var(--tinte); }
+.fangchance-kopf { min-height: 310px; padding: 55px max(24px, calc((100% - 1120px)/2)); position: relative; overflow: hidden; background: radial-gradient(circle at 83% 32%, rgba(244,200,93,.18), transparent 25%), linear-gradient(120deg, #17211c 0 58%, #293d31 100%); color: #fff; }
+.fangchance-kopf::after { content: '%'; position: absolute; right: 6%; bottom: -104px; color: rgba(255,255,255,.045); font: 800 360px/1 'Outfit'; transform: rotate(-8deg); }
+.fangchance-kopf h1 { position: relative; z-index: 1; max-width: 790px; margin: 14px 0 15px; font: 800 clamp(48px, 7vw, 78px)/.96 'Outfit'; letter-spacing: -.055em; }
+.fangchance-kopf p { position: relative; z-index: 1; max-width: 670px; margin: 0; color: rgba(255,255,255,.68); font-size: 16px; line-height: 1.55; }
+.fangchance-inhalt { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 34px 0 90px; }
+.fangchance-raster { display: grid; grid-template-columns: minmax(0,1fr) 350px; align-items: start; gap: 18px; }
+.fangchance-eingaben { display: grid; gap: 14px; }
+.fangchance-block { padding: 25px; border: 1px solid var(--linie); background: var(--papier); box-shadow: 0 8px 28px rgba(31,47,39,.055); }
+.fangchance-block > header { display: grid; grid-template-columns: 38px 1fr; align-items: center; gap: 12px; margin-bottom: 22px; }
+.fangchance-block > header > span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: var(--akzent-weich); color: var(--rot); font: 800 10px 'Outfit'; }
+.fangchance-block h2 { margin: 0; font: 700 23px/1.05 'Outfit'; letter-spacing: -.025em; }
+.fangchance-block header p { margin: 5px 0 0; color: var(--grau); font-size: 10px; line-height: 1.4; }
+.fangchance-pokemonwahl .paar-suche { max-width: 470px; }
+.fangchance-pokemoninfo { margin-top: 12px; display: grid; grid-template-columns: 80px 1fr auto; align-items: center; gap: 13px; padding: 9px 13px; border-left: 4px solid var(--rot); background: var(--creme); }
+.fangchance-pokemoninfo > img { width: 76px; height: 76px; object-fit: contain; }
+.fangchance-pokemoninfo > div { min-width: 0; display: flex; flex-direction: column; }
+.fangchance-pokemoninfo > div > small { color: var(--rot); font-size: 8px; font-weight: 800; }
+.fangchance-pokemoninfo > div > strong { margin: 2px 0 7px; font: 700 21px 'Outfit'; }
+.fangchance-pokemoninfo > div > span { display: flex; flex-wrap: wrap; gap: 4px; }
+.fangchance-pokemoninfo dl { margin: 0; padding-left: 18px; border-left: 1px solid var(--linie); text-align: right; }
+.fangchance-pokemoninfo dt { color: var(--grau); font-size: 7px; font-weight: 800; text-transform: uppercase; }
+.fangchance-pokemoninfo dd { margin: 4px 0 0; color: var(--rot); font: 800 17px 'Outfit'; }
+.fangchance-fehler { margin: 12px 0 0; padding: 10px; border-left: 4px solid #b8473d; background: #f8e1df; color: #8b2f2a; font-size: 10px; }
+.fangchance-werte { display: grid; grid-template-columns: 160px 1fr; gap: 12px; }
+.fangchance-werte > label { min-width: 0; padding: 13px; border: 1px solid var(--linie); background: var(--creme); }
+.fangchance-werte > label > span { display: block; margin-bottom: 8px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.fangchance-werte > label > input[type='number'] { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--linie); background: var(--papier); color: var(--tinte); font: 800 18px 'Outfit'; }
+.fangchance-werte > label > div { display: grid; grid-template-columns: 1fr 57px 15px; align-items: center; gap: 7px; }
+.fangchance-werte input[type='range'] { width: 100%; accent-color: var(--rot); }
+.fangchance-werte > label > div input[type='number'] { width: 57px; height: 42px; padding: 0 6px; border: 1px solid var(--linie); background: var(--papier); color: var(--tinte); text-align: center; font-weight: 800; }
+.fangchance-werte > label > div b { color: var(--grau); font-size: 10px; }
+.fangchance-werte > label > small { display: block; margin-top: 7px; color: var(--grau); font-size: 8px; }
+.fangchance-untertitel { display: flex; align-items: end; justify-content: space-between; gap: 10px; margin: 20px 0 8px; }
+.fangchance-untertitel strong { font-size: 10px; text-transform: uppercase; }
+.fangchance-untertitel span { color: var(--grau); font-size: 8px; }
+.fangchance-status { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.fangchance-status button { min-width: 0; min-height: 82px; padding: 8px 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 1px solid var(--linie); background: var(--creme); color: var(--tinte); cursor: pointer; }
+.fangchance-status button i { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--papier); color: var(--rot); font: 800 12px 'Outfit'; font-style: normal; }
+.fangchance-status button span { overflow: hidden; max-width: 100%; font-size: 8px; font-weight: 800; text-overflow: ellipsis; }
+.fangchance-status button small { color: var(--grau); font-size: 7px; }
+.fangchance-status button.aktiv { border-color: var(--rot); background: var(--akzent-weich); box-shadow: inset 0 -3px var(--rot); }
+.fangchance-status button.aktiv i { background: var(--rot); color: #fff; }
+.fangchance-baelle { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; }
+.fangchance-baelle button { min-width: 0; min-height: 68px; display: grid; grid-template-columns: 48px 1fr; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--linie); background: var(--creme); color: var(--tinte); cursor: pointer; text-align: left; }
+.fangchance-baelle button:hover { border-color: var(--rot); transform: translateY(-1px); }
+.fangchance-baelle button.aktiv { border-color: var(--rot); background: var(--akzent-weich); box-shadow: inset 4px 0 var(--rot); }
+.fangchance-baelle img { width: 44px; height: 44px; object-fit: contain; image-rendering: pixelated; }
+.fangchance-baelle button span { min-width: 0; display: flex; flex-direction: column; }
+.fangchance-baelle strong { font-size: 10px; }
+.fangchance-baelle small { margin-top: 4px; overflow: hidden; color: var(--grau); font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
+.fangchance-zusatz { margin-top: 10px; min-height: 62px; display: flex; align-items: center; gap: 12px; padding: 10px 13px; border-left: 4px solid #d99a2c; background: #fff0cf; cursor: pointer; }
+.fangchance-zusatz > input[type='checkbox'] { width: 20px; height: 20px; accent-color: var(--rot); }
+.fangchance-zusatz > span { display: flex; flex-direction: column; }
+.fangchance-zusatz strong { color: #674b18; font-size: 10px; }
+.fangchance-zusatz small { margin-top: 3px; color: #80652f; font-size: 8px; }
+.fangchance-runden { justify-content: space-between; cursor: default; }
+.fangchance-runden > input { width: 72px; height: 42px; padding: 0 8px; border: 1px solid #d3b66e; background: #fffaf0; color: #674b18; text-align: center; font-weight: 800; }
+.fangchance-ergebnis { position: sticky; top: 132px; min-height: 470px; padding: 28px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; background: #17211c; color: #fff; box-shadow: 0 18px 45px rgba(23,33,28,.2); text-align: center; }
+.fangchance-ergebnis::before { content: ''; position: absolute; inset: auto -80px -110px auto; width: 260px; height: 260px; border: 42px solid rgba(255,255,255,.025); border-radius: 50%; }
+.fangchance-leer { position: relative; z-index: 1; }
+.fangchance-leer > span { width: 76px; height: 76px; margin: 0 auto 17px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; background: rgba(255,255,255,.06); color: #f4c85d; font: 800 27px 'Outfit'; }
+.fangchance-leer h2 { margin: 0; font: 700 25px/1.1 'Outfit'; }
+.fangchance-leer p { margin: 10px auto 0; max-width: 230px; color: rgba(255,255,255,.55); font-size: 10px; line-height: 1.5; }
+.fangchance-lader { animation: fangchance-drehen 1s linear infinite; }
+@keyframes fangchance-drehen { to { transform: rotate(360deg); } }
+.fangchance-ergebnis__label { position: relative; z-index: 1; color: #f4c85d; font-size: 8px; font-weight: 800; letter-spacing: .14em; }
+.fangchance-ring { --fangchance: 0deg; position: relative; z-index: 1; width: 190px; height: 190px; margin: 20px 0 15px; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(var(--rot) var(--fangchance), rgba(255,255,255,.09) 0); }
+.fangchance-ring::after { content: ''; position: absolute; inset: 13px; border-radius: 50%; background: #17211c; }
+.fangchance-ring > div { position: relative; z-index: 1; display: flex; align-items: baseline; }
+.fangchance-ring strong { font: 800 52px/1 'Outfit'; letter-spacing: -.06em; }
+.fangchance-ring span { margin-left: 3px; color: #f4c85d; font-weight: 800; }
+.fangchance-ergebnis > h2 { position: relative; z-index: 1; margin: 0; font: 700 27px 'Outfit'; }
+.fangchance-ergebnis > p { position: relative; z-index: 1; margin: 5px 0 18px; color: rgba(255,255,255,.62); font-size: 10px; }
+.fangchance-ergebnis > dl { position: relative; z-index: 1; width: 100%; margin: 0; display: grid; grid-template-columns: repeat(3,1fr); border: 1px solid rgba(255,255,255,.11); }
+.fangchance-ergebnis > dl div { min-width: 0; padding: 10px 4px; }
+.fangchance-ergebnis > dl div + div { border-left: 1px solid rgba(255,255,255,.11); }
+.fangchance-ergebnis dt { color: rgba(255,255,255,.42); font-size: 6px; font-weight: 800; text-transform: uppercase; }
+.fangchance-ergebnis dd { margin: 4px 0 0; color: #fff; font: 700 11px 'Outfit'; }
+.fangchance-ergebnis > aside { position: relative; z-index: 1; width: 100%; margin-top: 10px; padding: 9px; background: rgba(244,200,93,.1); color: #f4c85d; font-size: 8px; font-weight: 800; }
+.fangchance-ergebnis > small { position: relative; z-index: 1; margin-top: 14px; color: rgba(255,255,255,.4); font-size: 7px; line-height: 1.45; }
+.fangchance-formelhinweis { margin: 15px 0 0; padding: 12px 15px; border-left: 4px solid var(--rot); background: var(--papier); color: var(--grau); font-size: 9px; line-height: 1.5; }
+.fangchance-formelhinweis strong { color: var(--tinte); }
+
+.itemshop-seite { min-height: calc(100vh - 64px); background: var(--creme); color: var(--tinte); }
+.itemshop-kopf { min-height: 300px; padding: 52px max(24px, calc((100% - 1160px)/2)); position: relative; overflow: hidden; background: radial-gradient(circle at 78% 25%, rgba(244,200,93,.16), transparent 28%), linear-gradient(120deg, #22281f 0 60%, #4a3820 100%); color: #fff; }
+.itemshop-kopf::after { content: '₽'; position: absolute; right: 5%; bottom: -120px; color: rgba(255,255,255,.045); font: 800 370px/1 'Outfit'; transform: rotate(-7deg); }
+.itemshop-kopf h1 { position: relative; z-index: 1; max-width: 770px; margin: 13px 0 13px; font: 800 clamp(50px, 7vw, 80px)/.95 'Outfit'; letter-spacing: -.055em; }
+.itemshop-kopf > p { position: relative; z-index: 1; max-width: 670px; margin: 0; color: rgba(255,255,255,.66); font-size: 15px; line-height: 1.55; }
+.itemshop-kopf > div { position: absolute; z-index: 2; right: max(24px, calc((100% - 1160px)/2)); bottom: 50px; width: 145px; min-height: 82px; display: flex; flex-direction: column; justify-content: center; padding: 14px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); }
+.itemshop-kopf > div strong { color: #f4c85d; font: 800 28px 'Outfit'; }
+.itemshop-kopf > div span { color: rgba(255,255,255,.52); font-size: 8px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.itemshop-inhalt { width: min(1160px, calc(100% - 40px)); margin: 0 auto; padding: 30px 0 90px; }
+.itemshop-suche { height: 60px; display: grid; grid-template-columns: 54px 1fr 48px; align-items: center; border: 1px solid var(--linie); border-left: 5px solid var(--rot); background: var(--papier); box-shadow: 0 8px 28px rgba(31,47,39,.06); }
+.itemshop-suche > span { color: var(--rot); text-align: center; font: 800 22px 'Outfit'; }
+.itemshop-suche input { width: 100%; height: 58px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--tinte); font-size: 14px; }
+.itemshop-suche input::placeholder { color: #969b97; }
+.itemshop-suche button { width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--creme); color: var(--grau); cursor: pointer; font-size: 18px; }
+.itemshop-kategorien { margin: 12px 0 25px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.itemshop-kategorien button { min-width: 0; min-height: 68px; display: grid; grid-template-columns: 30px 1fr; grid-template-rows: 1fr 1fr; align-items: center; column-gap: 7px; padding: 7px 8px; border: 1px solid var(--linie); background: var(--papier); color: var(--tinte); cursor: pointer; text-align: left; }
+.itemshop-kategorien button i { grid-row: 1 / 3; width: 29px; height: 29px; display: grid; place-items: center; border-radius: 50%; background: var(--creme); color: var(--rot); font: 800 8px 'Outfit'; font-style: normal; }
+.itemshop-kategorien button span { align-self: end; overflow: hidden; font-size: 8px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.itemshop-kategorien button small { align-self: start; margin-top: 2px; color: var(--grau); font-size: 7px; }
+.itemshop-kategorien button:hover { border-color: var(--rot); }
+.itemshop-kategorien button.aktiv { border-color: var(--rot); background: var(--akzent-weich); box-shadow: inset 0 -3px var(--rot); }
+.itemshop-kategorien button.aktiv i { background: var(--rot); color: #fff; }
+.itemshop-ergebnis-kopf { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 11px; }
+.itemshop-ergebnis-kopf > div { display: flex; align-items: center; gap: 10px; }
+.itemshop-ergebnis-kopf > div > span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: #17211c; color: #f4c85d; font: 800 9px 'Outfit'; }
+.itemshop-ergebnis-kopf small { color: var(--rot); font-size: 7px; font-weight: 800; letter-spacing: .12em; }
+.itemshop-ergebnis-kopf h2 { margin: 2px 0 0; font: 700 23px/1 'Outfit'; }
+.itemshop-ergebnis-kopf > p { margin: 0; color: var(--grau); font-size: 9px; }
+.itemshop-ergebnis-kopf > p strong { color: var(--tinte); }
+.itemshop-raster { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.itemshop-raster > button { min-width: 0; min-height: 92px; display: grid; grid-template-columns: 68px 1fr 18px; align-items: center; gap: 9px; padding: 8px 9px; border: 1px solid var(--linie); background: var(--papier); color: var(--tinte); cursor: pointer; text-align: left; transition: .16s ease; }
+.itemshop-raster > button:hover { border-color: var(--rot); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(31,47,39,.09); }
+.itemshop-bild { width: 66px; height: 66px; display: grid; place-items: center; background: var(--creme); }
+.itemshop-bild img { width: 48px; height: 48px; object-fit: contain; image-rendering: pixelated; }
+.itemshop-karte__text { min-width: 0; display: flex; flex-direction: column; }
+.itemshop-karte__text small { overflow: hidden; color: var(--rot); font-size: 6px; font-weight: 800; text-transform: uppercase; text-overflow: ellipsis; white-space: nowrap; }
+.itemshop-karte__text strong { margin-top: 4px; overflow: hidden; font: 700 13px 'Outfit'; text-overflow: ellipsis; white-space: nowrap; }
+.itemshop-karte__text em { margin-top: 4px; overflow: hidden; color: var(--grau); font-size: 8px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+.itemshop-raster > button > b { color: #a8ada9; font-size: 20px; }
+.itemshop-mehr { min-width: 260px; min-height: 48px; margin: 22px auto 0; padding: 10px 18px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--rot); background: var(--papier); color: var(--rot); cursor: pointer; font-size: 10px; font-weight: 800; }
+.itemshop-mehr:hover { background: var(--rot); color: #fff; }
+.itemshop-mehr span { min-width: 25px; padding: 3px 5px; border-radius: 10px; background: var(--akzent-weich); font-size: 7px; }
+.itemshop-leer { padding: 70px 20px; border: 1px dashed var(--linie); background: var(--papier); text-align: center; }
+.itemshop-leer > span { color: var(--rot); font-size: 35px; }
+.itemshop-leer h2 { margin: 8px 0 4px; font: 700 23px 'Outfit'; }
+.itemshop-leer p { margin: 0; color: var(--grau); font-size: 10px; }
+.itemshop-dialog-hintergrund { position: fixed; inset: 0; z-index: 180; display: grid; place-items: center; padding: 20px; background: rgba(8,19,14,.82); backdrop-filter: blur(5px); }
+.itemshop-dialog { width: min(780px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; position: relative; display: grid; grid-template-columns: 260px 1fr; background: var(--papier); color: var(--tinte); box-shadow: 0 28px 90px rgba(0,0,0,.42); }
+.itemshop-dialog__schliessen { position: absolute; z-index: 3; top: 14px; right: 14px; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--linie); border-radius: 50%; background: var(--papier); color: var(--tinte); cursor: pointer; font-size: 23px; }
+.itemshop-dialog__bild { min-height: 380px; padding: 25px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, rgba(255,255,255,.1), transparent 55%), #17211c; color: #fff; }
+.itemshop-dialog__bild > span { color: #f4c85d; font-size: 8px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.itemshop-dialog__bild img { width: 145px; height: 145px; margin-top: 18px; object-fit: contain; image-rendering: pixelated; }
+.itemshop-dialog__info { padding: 42px 38px 34px; }
+.itemshop-dialog__info > small { color: var(--rot); font-size: 8px; font-weight: 800; letter-spacing: .11em; }
+.itemshop-dialog__info > h2 { margin: 5px 0 15px; padding-right: 30px; font: 800 37px/1 'Outfit'; letter-spacing: -.04em; }
+.itemshop-dialog__info > p { margin: 0; color: var(--grau); font-size: 12px; line-height: 1.65; }
+.itemshop-dialog__laden { padding: 24px 0; }
+.itemshop-dialog__fehler { padding: 12px; border-left: 4px solid #b8473d; background: #f8e1df; color: #8b2f2a !important; }
+.itemshop-attacke { margin-top: 22px; padding: 16px; border: 1px solid var(--linie); background: var(--creme); }
+.itemshop-attacke header span { color: var(--rot); font-size: 7px; font-weight: 800; letter-spacing: .11em; }
+.itemshop-attacke h3 { margin: 4px 0 11px; font: 700 22px 'Outfit'; }
+.itemshop-attacke > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.itemshop-attacke dl { flex: 1; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); }
+.itemshop-attacke dl div { padding: 6px 8px; border-left: 1px solid var(--linie); }
+.itemshop-attacke dt { color: var(--grau); font-size: 6px; font-weight: 800; text-transform: uppercase; }
+.itemshop-attacke dd { margin: 3px 0 0; font: 700 11px 'Outfit'; }
+.itemshop-attacke > p { margin: 12px 0 0; padding-top: 11px; border-top: 1px solid var(--linie); color: var(--grau); font-size: 9px; line-height: 1.5; }
+.itemshop-dialog__info > aside { margin-top: 14px; padding: 11px; border-left: 4px solid #d99a2c; background: #fff0cf; color: #74591f; font-size: 8px; line-height: 1.5; }
 
 .regeln-seite { min-height: calc(100vh - 64px); background: #efeee7; }
 .regeln-kopf { min-height: 440px; padding: 48px max(24px, calc((100% - 1120px)/2)) 58px; background: radial-gradient(circle at 80% 15%, rgba(220,68,54,.22), transparent 30%), linear-gradient(120deg, #17211c 0 55%, #3c1e1c 100%); color: #fff; position: relative; overflow: hidden; }
@@ -695,11 +931,17 @@
 .attacken-zeile__name { font-weight: 800; }
 .attacken-zeile > p { grid-column: 2 / -1; margin: -2px 0 3px; color: var(--grau); font-size: 10px; line-height: 1.45; }
 .attacken-zeile .typ { justify-self: start; }
+.attacken-legende { margin: 10px 0 0; padding: 10px 12px; border-left: 3px solid var(--rot); background: var(--akzent-weich); color: var(--grau); font-size: 9px; line-height: 1.5; }
+.attacken-legende strong { color: var(--tinte); }
 .beste-empfehlung__zug .attacken-wirkung { margin: 18px 0 0; padding: 12px 14px; border-left: 3px solid #f4c85d; background: rgba(255,255,255,.07); }
 .beste-empfehlung__zug .attacken-wirkung strong { color: #f4c85d; }
 .entwicklung-liste { display: grid; gap: 12px; }
 .entwicklung { display: grid; grid-template-columns: 140px 1fr 140px; align-items: center; border: 1px solid var(--linie); padding: 14px; gap: 15px; }
-.entwicklung > div { display: flex; align-items: center; gap: 10px; font: 700 13px 'Outfit'; }
+.entwicklung-pokemon { min-width: 0; display: grid; grid-template-columns: 60px 1fr; grid-template-rows: 1fr 1fr; align-items: center; gap: 0 10px; padding: 6px; border: 1px solid transparent; background: transparent; color: var(--tinte); cursor: pointer; text-align: left; font: 700 13px 'Outfit'; transition: .16s ease; }
+.entwicklung-pokemon:hover { border-color: var(--rot); background: var(--akzent-weich); }
+.entwicklung-pokemon img { grid-row: 1 / 3; }
+.entwicklung-pokemon strong { align-self: end; }
+.entwicklung-pokemon small { align-self: start; margin-top: 3px; color: var(--rot); font: 700 8px 'Segoe UI', sans-serif; text-transform: uppercase; letter-spacing: .05em; }
 .entwicklung img { width: 60px; height: 60px; object-fit: contain; background: #efeee8; }
 .entwicklung > span { display: flex; align-items: center; gap: 14px; color: var(--grau); }
 .entwicklung b { color: var(--rot); font-size: 24px; }
@@ -820,8 +1062,13 @@
 [data-theme='dark'] .pokemon-karte__bild { background: linear-gradient(145deg, #151d18, #222d27); }
 [data-theme='dark'] .teamplaner-seite,
 [data-theme='dark'] .kampfberater-seite,
+[data-theme='dark'] .fangchance-seite,
+[data-theme='dark'] .itemshop-seite,
 [data-theme='dark'] .regeln-seite,
-[data-theme='dark'] .abenteuer-seite { background: var(--creme); }
+[data-theme='dark'] .abenteuer-seite,
+[data-theme='dark'] .begegnungen-seite,
+[data-theme='dark'] .pokedex-seite,
+[data-theme='dark'] .cap-seite { background: var(--creme); color: var(--tinte); }
 [data-theme='dark'] input,
 [data-theme='dark'] select { color: var(--tinte); }
 [data-theme='dark'] .such-auswahl input,
@@ -836,6 +1083,40 @@
 [data-theme='dark'] .manuelle-attacke > input,
 [data-theme='dark'] .etappe-punkt,
 [data-theme='dark'] .etappe-cap button { background: #222c26; }
+[data-theme='dark'] .fangchance-block { background: var(--papier); }
+[data-theme='dark'] .fangchance-pokemoninfo,
+[data-theme='dark'] .fangchance-werte > label,
+[data-theme='dark'] .fangchance-status button,
+[data-theme='dark'] .fangchance-baelle button { background: #222c26; color: var(--tinte); }
+[data-theme='dark'] .fangchance-werte input[type='number'] { background: #18201c !important; color: var(--tinte) !important; }
+[data-theme='dark'] .fangchance-status button i { background: #18201c; }
+[data-theme='dark'] .fangchance-status button.aktiv,
+[data-theme='dark'] .fangchance-baelle button.aktiv { background: color-mix(in srgb, var(--rot) 20%, #222c26); color: #fff; }
+[data-theme='dark'] .fangchance-zusatz { background: #463c1f; }
+[data-theme='dark'] .fangchance-zusatz strong { color: #f2c762; }
+[data-theme='dark'] .fangchance-zusatz small { color: #cbb879; }
+[data-theme='dark'] .fangchance-runden > input { border-color: #756630; background: #292614 !important; color: #f2c762 !important; }
+[data-theme='dark'] .fangchance-formelhinweis { background: var(--papier); }
+[data-theme='dark'] .schadens-vorschau { background: #18201c; }
+[data-theme='dark'] .gegner-schadens-vorschau { background: var(--papier); }
+[data-theme='dark'] .schadens-attacken button { background: #222c26; color: var(--tinte); }
+[data-theme='dark'] .schadens-attacken button.aktiv { background: color-mix(in srgb, var(--rot) 20%, #222c26); color: #fff; }
+[data-theme='dark'] .gegner-schadens-attacken button.aktiv { background: color-mix(in srgb, #b8473d 24%, #222c26); color: #fff; }
+[data-theme='dark'] .gegner-attacke-suche > input,
+[data-theme='dark'] .gegner-attacke-suche > div,
+[data-theme='dark'] .gegner-attacke-suche > div button { background: #222c26; color: var(--tinte); }
+[data-theme='dark'] .gegner-attacke-suche > div button:hover { background: #2a352f; }
+[data-theme='dark'] .itemshop-suche,
+[data-theme='dark'] .itemshop-kategorien button,
+[data-theme='dark'] .itemshop-raster > button,
+[data-theme='dark'] .itemshop-leer { background: var(--papier); color: var(--tinte); }
+[data-theme='dark'] .itemshop-kategorien button i,
+[data-theme='dark'] .itemshop-bild { background: #18201c; }
+[data-theme='dark'] .itemshop-kategorien button.aktiv { background: color-mix(in srgb, var(--rot) 20%, var(--papier)); color: #fff; }
+[data-theme='dark'] .itemshop-dialog { background: var(--papier); color: var(--tinte); }
+[data-theme='dark'] .itemshop-dialog__schliessen { border-color: #516058; background: #222c26; color: #fff; }
+[data-theme='dark'] .itemshop-attacke { background: #18201c; }
+[data-theme='dark'] .itemshop-dialog__info > aside { background: #463c1f; color: #d8c47e; }
 [data-theme='dark'] .such-vorschlaege > button:hover,
 [data-theme='dark'] .item-ergebnis:hover,
 [data-theme='dark'] .item-ergebnis.aktiv,
@@ -848,6 +1129,20 @@
 [data-theme='dark'] .manuelle-attacke > div button,
 [data-theme='dark'] .standard-attacken > div > button,
 [data-theme='dark'] .etappe-punkt__hilfen button { background: var(--papier); color: var(--tinte); }
+[data-theme='dark'] .matchup-gruppe,
+[data-theme='dark'] .entwicklung img,
+[data-theme='dark'] .berater-pokemon img.berater-pokemon__item { background: #252f29; }
+[data-theme='dark'] .wert > div { background: #36423b; }
+[data-theme='dark'] .attacken-zeile { border-bottom-color: var(--linie); }
+[data-theme='dark'] .entwicklung-pokemon:hover { background: color-mix(in srgb, var(--rot) 18%, var(--papier)); }
+[data-theme='dark'] .attacken-legende,
+[data-theme='dark'] .encounter-zeile > b { background: color-mix(in srgb, var(--rot) 18%, var(--papier)); color: #f1f5f2; }
+[data-theme='dark'] .suche input::placeholder,
+[data-theme='dark'] .manuelle-attacke > input::placeholder,
+[data-theme='dark'] .such-auswahl input::placeholder { color: #89968e; }
+[data-theme='dark'] .paar-hinzufuegen:disabled,
+[data-theme='dark'] .analyse-knopf:disabled { background: #465249; color: #c7d0ca; }
+[data-theme='dark'] .leere-suche { border-color: var(--linie); }
 [data-theme='dark'] .level-waehler__liste button:hover,
 [data-theme='dark'] .level-waehler__liste button.aktiv { background: var(--rot); color: #fff; }
 [data-theme='dark'] .item-auswahl__wert--belegt { background: #3b3520; border-color: #8d793b; }
@@ -862,6 +1157,11 @@
 [data-theme='dark'] .etappe-navigation,
 [data-theme='dark'] .abenteuer-popup__wechsel button,
 [data-theme='dark'] .abenteuer-popup__info li { background: #252f29; }
+[data-theme='dark'] .suche button { background: #2b352f; color: var(--tinte); }
+[data-theme='dark'] .team-unterbereiche .mini-paar,
+[data-theme='dark'] .team-unterbereiche .grab-paar { background: #18201c; }
+[data-theme='dark'] .paar-zeile--leer > div { color: #9eaaa2; border-color: #4a574f; }
+[data-theme='dark'] .paar-zeile--leer > div > span { border-color: #5c6961; }
 [data-theme='dark'] .standard-attacken > div > button.ausgewaehlt,
 [data-theme='dark'] .etappe-punkt.erledigt { background: #20372c; }
 [data-theme='dark'] .regeln-sprungmarken { background: rgba(27,36,31,.95); }
@@ -907,6 +1207,11 @@
 [data-theme='dark'] .berater-team--rot .berater-pokemon small { color: #ff8b80; }
 [data-theme='dark'] .berater-team--blau.berater-team--aktiv header em,
 [data-theme='dark'] .berater-team--blau .berater-pokemon small { color: #72bcea; }
+[data-theme='dark'] .paar-suche--rot > label,
+[data-theme='dark'] .team-pokemon--rot em { color: #ff8b80; }
+[data-theme='dark'] .paar-suche--blau > label,
+[data-theme='dark'] .team-pokemon--blau em { color: #72bcea; }
+[data-theme='dark'] .encounter-naehe__zeile > b { color: #e6a05b; }
 [data-theme='dark'] .team-punkt--rot { box-shadow: 0 0 0 5px rgba(216,59,53,.24); }
 [data-theme='dark'] .team-punkt--blau { box-shadow: 0 0 0 5px rgba(40,116,167,.27); }
 [data-theme='dark'] .encounter-naehe__zeile,
@@ -984,7 +1289,39 @@
 footer { padding: 16px 20px; background: #17211c; color: rgba(255,255,255,.5); text-align: center; font-size: 10px; }
 footer p { margin: 0; }
 
+@media (min-width: 901px) {
+  .startseite .held { min-height: 145px; padding-top: 24px; padding-bottom: 24px; }
+  .startseite .held h1 { font-size: clamp(26px, 3vw, 38px); margin: 9px 0; }
+  .startseite .held::after { bottom: -70px; font-size: 185px; }
+  .startseite .held__ball { width: 130px; border-width: 9px; }
+  .startseite .held__ball::before { height: 9px; }
+  .startseite .held p.held__fussnote { bottom: 12px; }
+  .start-werkzeugleiste { min-height: 58px; padding-top: 7px; padding-bottom: 7px; }
+  .bereich-auswahl { padding: 12px 0 28px; }
+  .arenen-fortschritt { margin-bottom: 11px; padding: 8px 15px 7px; }
+  .fortschritt-symbol svg { width: 31px; height: 31px; }
+  .fortschritt-symbol small { width: 14px; height: 14px; font-size: 6px; }
+  .arena-auswahl { margin-top: 7px; }
+  .arena-auswahl > label { margin-bottom: 4px; font-size: 7px; }
+  .arena-auswahl select { height: 39px; }
+  .notizbuch-knopf { height: 40px; }
+  .arenen-fortschritt > p { margin-top: 4px; }
+  .bereich-raster { gap: 9px 12px; }
+  .bereich-karte { min-height: 112px; padding: 12px 14px; }
+  .bereich-karte__nummer { top: 10px; right: 13px; }
+  .bereich-karte__symbol { width: 32px; height: 32px; margin-bottom: 7px; font-size: 17px; }
+  .bereich-karte strong { margin-bottom: 3px; font-size: 17px; }
+  .bereich-karte > span:not([class]) { font-size: 10px; line-height: 1.25; }
+  .bereich-karte em { padding-top: 5px; font-size: 7px; }
+}
+
 @media (max-width: 900px) {
+  .fangchance-raster { grid-template-columns: 1fr; }
+  .fangchance-ergebnis { position: relative; top: auto; min-height: 430px; }
+  .itemshop-kategorien { grid-template-columns: repeat(4, 1fr); }
+  .itemshop-raster { grid-template-columns: repeat(3, 1fr); }
+  .schadens-attacken { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .itemshop-kopf > div { position: relative; right: auto; bottom: auto; margin-top: 24px; }
   .team-unterbereiche { grid-template-columns: 1fr; }
   .grabbox__raster { grid-template-columns: 1fr; }
   .encounter-karte__layout { grid-template-columns: 1fr; }
@@ -1014,6 +1351,46 @@ footer p { margin: 0; }
 }
 
 @media (max-width: 650px) {
+  .fangchance-kopf { min-height: 0; padding: 36px 18px 42px; }
+  .fangchance-kopf h1 { font-size: 43px; }
+  .fangchance-kopf p { font-size: 13px; }
+  .fangchance-inhalt { width: min(100% - 24px, 1120px); padding: 20px 0 60px; }
+  .fangchance-block { padding: 18px 14px; }
+  .fangchance-block > header { grid-template-columns: 34px 1fr; gap: 9px; }
+  .fangchance-block > header > span { width: 34px; height: 34px; }
+  .fangchance-block h2 { font-size: 20px; }
+  .fangchance-pokemoninfo { grid-template-columns: 62px 1fr; }
+  .fangchance-pokemoninfo > img { width: 60px; height: 60px; }
+  .fangchance-pokemoninfo dl { grid-column: 1 / -1; padding: 9px 0 0; border-top: 1px solid var(--linie); border-left: 0; text-align: left; }
+  .fangchance-werte { grid-template-columns: 1fr; }
+  .fangchance-status { grid-template-columns: repeat(3, 1fr); }
+  .fangchance-baelle { grid-template-columns: 1fr; }
+  .fangchance-ergebnis { min-height: 420px; padding: 24px 16px; }
+  .itemshop-kopf { min-height: 0; padding: 36px 18px 42px; }
+  .itemshop-kopf h1 { font-size: 44px; }
+  .itemshop-kopf > p { font-size: 13px; }
+  .itemshop-kopf > div { width: 132px; min-height: 70px; margin-top: 20px; }
+  .itemshop-inhalt { width: min(100% - 24px, 1160px); padding: 20px 0 60px; }
+  .itemshop-kategorien { grid-template-columns: repeat(2, 1fr); }
+  .itemshop-raster { grid-template-columns: 1fr; }
+  .itemshop-raster > button { min-height: 82px; }
+  .itemshop-dialog-hintergrund { padding: 0; }
+  .itemshop-dialog { width: 100%; max-height: 100vh; min-height: 100vh; grid-template-columns: 1fr; }
+  .itemshop-dialog__bild { min-height: 235px; }
+  .itemshop-dialog__bild img { width: 115px; height: 115px; }
+  .itemshop-dialog__info { padding: 28px 18px 35px; }
+  .itemshop-dialog__info > h2 { font-size: 32px; }
+  .itemshop-attacke > div { align-items: flex-start; flex-direction: column; }
+  .itemshop-attacke dl { width: 100%; }
+  .schadens-vorschau { padding: 18px 12px; }
+  .schadens-vorschau > header { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .gegner-schadens-vorschau { padding: 18px 12px; }
+  .gegner-schadens-vorschau > header { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .schadens-attacken { grid-template-columns: 1fr; }
+  .schadens-anzeige { padding: 14px 10px; }
+  .schadens-werte { grid-template-columns: 1fr; }
+  .schadens-effektchancen > div { grid-template-columns: 1fr; }
+  .schadens-statuswirkung dl { grid-template-columns: 1fr; }
   .arena-steuerung { grid-template-columns: 1fr; }
   .notizbuch-knopf { width: 155px; justify-self: end; }
   .pokedex-umfang { grid-template-columns: 1fr; }
@@ -1097,7 +1474,7 @@ footer p { margin: 0; }
   .attacken-tabelle { overflow-x: auto; }
   .attacken-zeile { min-width: 760px; }
   .entwicklung { grid-template-columns: 1fr; text-align: center; }
-  .entwicklung > div { justify-content: center; }
+  .entwicklung-pokemon { width: min(260px, 100%); justify-self: center; }
   .entwicklung > span { flex-direction: column; gap: 3px; }
   .entwicklung b { transform: rotate(90deg); }
   .koerperdaten { gap: 25px; }

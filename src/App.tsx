@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import './App.css'
 import { POKEMON, type PokedexEntry } from './pokemonData'
 import { ATTACKEN } from './moveData'
@@ -12,8 +12,11 @@ const offlineApiPfad = (url: string) => {
 }
 const BILD = (id: number) =>
   OFFLINE_DATEN ? `${import.meta.env.BASE_URL}offline-data/pokemon/${id}.png` : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
-const ITEM_BILD = (identifier: string) =>
-  OFFLINE_DATEN ? `${import.meta.env.BASE_URL}offline-data/items/${identifier}.png` : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${identifier}.png`
+const ITEM_BILD = (identifier: string) => {
+  const maschinenTyp = maschinenTypFuerIdentifier(identifier)
+  const bildname = maschinenTyp ? `tm-${maschinenTyp}` : identifier
+  return OFFLINE_DATEN ? `${import.meta.env.BASE_URL}offline-data/items/${bildname}.png` : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/${bildname}.png`
+}
 
 type NamedResource = { name: string; url: string }
 type LocalizedName = { name: string; language: NamedResource }
@@ -52,6 +55,7 @@ type PokemonApi = {
   }[]
 }
 type SpeciesApi = {
+  capture_rate: number
   names: LocalizedName[]
   genera: { genus: string; language: NamedResource }[]
   flavor_text_entries: {
@@ -63,14 +67,41 @@ type SpeciesApi = {
 }
 type MoveApi = {
   id: number
+  name: string
   names: LocalizedName[]
   type: NamedResource
+  damage_class: NamedResource
+  target: NamedResource
+  priority: number
   power: number | null
   accuracy: number | null
   pp: number | null
   effect_chance: number | null
   effect_entries: { short_effect: string; effect: string; language: NamedResource }[]
   flavor_text_entries: { flavor_text: string; language: NamedResource; version_group: NamedResource }[]
+  stat_changes: { change: number; stat: NamedResource }[]
+  meta: null | {
+    ailment: NamedResource
+    category: NamedResource
+    min_hits: number | null
+    max_hits: number | null
+    min_turns: number | null
+    max_turns: number | null
+    drain: number
+    healing: number
+    crit_rate: number
+    ailment_chance: number
+    flinch_chance: number
+    stat_chance: number
+  }
+}
+type ItemApi = {
+  id: number
+  name: string
+  category: NamedResource
+  attributes: NamedResource[]
+  effect_entries: { short_effect: string; effect: string; language: NamedResource }[]
+  flavor_text_entries: { text: string; language: NamedResource; version_group: NamedResource }[]
 }
 type EvolutionDetail = {
   trigger: NamedResource
@@ -103,6 +134,10 @@ type LevelMove = {
   accuracy: number | null
   pp: number | null
   effect: string
+  ailment: string | null
+  ailmentChance: number | null
+  flinchChance: number | null
+  statChance: number | null
 }
 type EvolutionStep = { fromId: number; toId: number; condition: string }
 type PokemonDetails = {
@@ -140,6 +175,58 @@ const TYPEN: Record<string, string> = {
   ice: 'Eis',
   dragon: 'Drache',
   dark: 'Unlicht',
+}
+
+const SPEZIAL_TYPEN = new Set(['fire', 'water', 'grass', 'electric', 'ice', 'psychic', 'dragon', 'dark'])
+
+const STATUS_NAMEN: Record<string, string> = {
+  paralysis: 'Paralyse', sleep: 'Schlaf', freeze: 'Einfrieren', burn: 'Verbrennung', poison: 'Vergiftung',
+  confusion: 'Verwirrung', infatuation: 'Anziehung', trap: 'Fesselung', nightmare: 'Nachtmahr',
+  torment: 'Folterknecht', disable: 'Aussetzer', yawn: 'Gähner', 'leech-seed': 'Egelsamen',
+  embargo: 'Itemsperre', 'perish-song': 'Abgesang', ingrain: 'Verwurzler',
+}
+
+const STATUSWERTE: Record<string, string> = {
+  attack: 'Angriff', defense: 'Verteidigung', 'special-attack': 'Spezial-Angriff',
+  'special-defense': 'Spezial-Verteidigung', speed: 'Initiative', accuracy: 'Genauigkeit', evasion: 'Fluchtwert',
+}
+
+const BESONDERE_ATTACKEN: Record<string, string> = {
+  splash: 'Hat keine Wirkung.',
+  metronome: 'Wählt zufällig eine andere Attacke aus und setzt sie sofort ein.',
+  'mirror-move': 'Wiederholt die Attacke, die das Ziel zuletzt eingesetzt hat.',
+  mimic: 'Kopiert vorübergehend die zuletzt vom Ziel eingesetzte Attacke.',
+  transform: 'Verwandelt den Anwender in das Ziel und kopiert dessen Werte und Attacken.',
+  substitute: 'Opfert ein Viertel der maximalen KP und erschafft einen Delegator, der Treffer abfängt.',
+  protect: 'Schützt den Anwender in dieser Runde vor fast allen Attacken. Mehrfacher Einsatz kann scheitern.',
+  detect: 'Schützt den Anwender in dieser Runde vor fast allen Attacken. Mehrfacher Einsatz kann scheitern.',
+  rest: 'Heilt alle KP und Statusprobleme, versetzt den Anwender aber für zwei Runden in Schlaf.',
+  'sleep-talk': 'Setzt im Schlaf zufällig eine der anderen bekannten Attacken ein.',
+  sketch: 'Kopiert die zuletzt vom Ziel eingesetzte Attacke dauerhaft.',
+  'belly-drum': 'Opfert die Hälfte der maximalen KP und maximiert den Angriff.',
+  'baton-pass': 'Wechselt den Anwender aus und überträgt Wertveränderungen sowie bestimmte Effekte.',
+  'false-swipe': 'Fügt Schaden zu, lässt dem Ziel aber immer mindestens 1 KP.',
+  'destiny-bond': 'Wird der Anwender danach besiegt, wird das angreifende Pokémon ebenfalls besiegt.',
+  'perish-song': 'Alle hörenden Pokémon werden nach drei Runden besiegt, sofern sie nicht auswechseln.',
+  'mean-look': 'Verhindert, dass das Ziel auswechselt oder flieht.',
+  'spider-web': 'Verhindert, dass das Ziel auswechselt oder flieht.',
+  block: 'Verhindert, dass das Ziel auswechselt oder flieht.',
+  thief: 'Stiehlt das getragene Item des Ziels, wenn der Anwender selbst keines trägt.',
+  trick: 'Tauscht das getragene Item des Anwenders mit dem des Ziels.',
+  'knock-off': 'Entfernt das getragene Item des Ziels für den restlichen Kampf.',
+  'rapid-spin': 'Beseitigt Fesselungen, Egelsamen und Stachler auf der eigenen Seite.',
+  'hidden-power': 'Typ und Stärke hängen von den individuellen Werten des Anwenders ab.',
+  return: 'Die Stärke steigt mit der Freundschaft des Anwenders.',
+  frustration: 'Die Stärke steigt, je geringer die Freundschaft des Anwenders ist.',
+  endeavor: 'Senkt die KP des Ziels auf die aktuellen KP des Anwenders.',
+  'focus-punch': 'Lädt vor dem Angriff auf und scheitert, wenn der Anwender vorher getroffen wird.',
+  counter: 'Kontert den zuletzt erlittenen physischen Schaden mit doppelter Stärke.',
+  'mirror-coat': 'Kontert den zuletzt erlittenen Spezial-Schaden mit doppelter Stärke.',
+  bide: 'Speichert erlittenen Schaden und gibt anschließend das Doppelte zurück.',
+  'solar-beam': 'Lädt in der ersten Runde Sonnenlicht und greift in der zweiten Runde an.',
+  fly: 'Fliegt in der ersten Runde hoch und greift in der zweiten Runde an.',
+  dig: 'Gräbt sich in der ersten Runde ein und greift in der zweiten Runde an.',
+  dive: 'Taucht in der ersten Runde ab und greift in der zweiten Runde an.',
 }
 
 const WERTE: Record<string, string> = {
@@ -238,15 +325,57 @@ function attackenWirkung(attacke: MoveApi) {
     (eintrag) => eintrag.language.name === 'de' && eintrag.version_group.name === 'firered-leafgreen',
   )?.flavor_text
   const deutscherEffekt = attacke.effect_entries?.find((eintrag) => eintrag.language.name === 'de')?.short_effect
-  const text = feuerrotText ?? deutscherEffekt ?? 'Für diese Attacke ist keine deutsche Wirkungsbeschreibung hinterlegt.'
-  return text
-    .replace(/\$effect_chance/g, String(attacke.effect_chance ?? '—'))
-    .replace(/[\n\f]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
+  const vorhandenerText = feuerrotText ?? deutscherEffekt
+  if (vorhandenerText) {
+    return vorhandenerText.replace(/\$effect_chance/g, String(attacke.effect_chance ?? '—')).replace(/[\n\f]/g, ' ').replace(/\s+/g, ' ').trim()
+  }
+
+  const besonders = BESONDERE_ATTACKEN[attacke.name]
+  if (besonders) return besonders
+
+  const meta = attacke.meta
+  const teile: string[] = []
+  if (meta?.category.name === 'ohko') teile.push('Besiegt das Ziel bei einem Treffer sofort.')
+  else if (attacke.power) teile.push(`Fügt ${SPEZIAL_TYPEN.has(attacke.type.name) ? 'speziellen' : 'physischen'} Schaden mit Basisstärke ${attacke.power} zu.`)
+
+  if (meta?.min_hits) teile.push(meta.min_hits === meta.max_hits ? `Trifft ${meta.min_hits}-mal.` : `Trifft ${meta.min_hits}–${meta.max_hits ?? 5}-mal.`)
+  if (meta?.min_turns && meta.min_turns > 1) teile.push(`Wirkt über ${meta.min_turns}${meta.max_turns && meta.max_turns !== meta.min_turns ? `–${meta.max_turns}` : ''} Runden.`)
+  if (meta?.drain && meta.drain > 0) teile.push(`Heilt den Anwender um ${meta.drain} % des verursachten Schadens.`)
+  if (meta?.drain && meta.drain < 0) teile.push(`Der Anwender erleidet ${Math.abs(meta.drain)} % des verursachten Schadens als Rückstoß.`)
+  if (meta?.healing && meta.healing > 0) teile.push(`Heilt ${meta.healing} % der maximalen KP des Anwenders.`)
+  if (meta?.crit_rate && meta.crit_rate > 0) teile.push('Besitzt eine erhöhte Volltrefferquote.')
+
+  if (meta?.ailment.name && meta.ailment.name !== 'none') {
+    const status = STATUS_NAMEN[meta.ailment.name] ?? fallbackName(meta.ailment.name)
+    const chance = meta.ailment_chance || attacke.effect_chance || 0
+    teile.push(chance > 0 ? `Kann mit ${chance} % Wahrscheinlichkeit ${status} verursachen.` : `Verursacht ${status}, wenn die Attacke trifft.`)
+  }
+  if (meta?.flinch_chance && meta.flinch_chance > 0) teile.push(`Lässt das Ziel mit ${meta.flinch_chance} % Wahrscheinlichkeit zurückschrecken.`)
+
+  if (attacke.stat_changes?.length) {
+    const zielIstAnwender = attacke.target.name === 'user'
+    attacke.stat_changes.forEach((aenderung) => {
+      const wert = STATUSWERTE[aenderung.stat.name] ?? fallbackName(aenderung.stat.name)
+      const richtung = aenderung.change > 0 ? 'erhöhen' : 'senken'
+      const stufen = Math.abs(aenderung.change)
+      const chance = meta?.stat_chance || attacke.effect_chance || 0
+      teile.push(chance > 0
+        ? `Kann mit ${chance} % Wahrscheinlichkeit ${wert} ${zielIstAnwender ? 'des Anwenders' : 'des Ziels'} um ${stufen} Stufe${stufen === 1 ? '' : 'n'} ${richtung}.`
+        : `${aenderung.change > 0 ? 'Erhöht' : 'Senkt'} ${wert} ${zielIstAnwender ? 'des Anwenders' : 'des Ziels'} um ${stufen} Stufe${stufen === 1 ? '' : 'n'}.`)
+    })
+  }
+  if (attacke.priority > 0) teile.push('Besitzt erhöhte Priorität und wird meist zuerst eingesetzt.')
+  if (attacke.priority < 0) teile.push('Besitzt verringerte Priorität und wird meist zuletzt eingesetzt.')
+  if (meta?.category.name === 'force-switch') teile.push('Zwingt das Ziel zum Wechsel; gegen wilde Pokémon kann der Kampf enden.')
+
+  return teile.length ? teile.join(' ') : 'Löst einen besonderen Kampfeffekt aus, ohne direkten Schaden zu verursachen.'
 }
 
 function attackeAufbereiten(attacke: MoveApi, level = 0): LevelMove {
+  const ailment = attacke.meta?.ailment.name && attacke.meta.ailment.name !== 'none' ? attacke.meta.ailment.name : null
+  const ailmentChance = ailment ? (attacke.meta?.ailment_chance || attacke.effect_chance || 100) : null
+  const flinchChance = attacke.meta?.flinch_chance ? attacke.meta.flinch_chance : null
+  const statChance = attacke.stat_changes.length ? (attacke.meta?.stat_chance || attacke.effect_chance || 100) : null
   return {
     id: attacke.id,
     name: deutsch(attacke.names, fallbackName(ATTACKEN.find((eintrag) => eintrag.id === attacke.id)?.identifier ?? 'Attacke')),
@@ -256,6 +385,10 @@ function attackeAufbereiten(attacke: MoveApi, level = 0): LevelMove {
     accuracy: attacke.accuracy,
     pp: attacke.pp,
     effect: attackenWirkung(attacke),
+    ailment,
+    ailmentChance,
+    flinchChance,
+    statChance,
   }
 }
 
@@ -489,9 +622,11 @@ function Startseite({
   pokedexOeffnen,
   teamplanerOeffnen,
   kampfberaterOeffnen,
+  fangchanceOeffnen,
   regelnOeffnen,
   encounterOeffnen,
   abenteuerplanOeffnen,
+  itemshopOeffnen,
   challengeZuruecksetzen,
 }: {
   menueOeffnen: () => void
@@ -500,9 +635,11 @@ function Startseite({
   pokedexOeffnen: () => void
   teamplanerOeffnen: () => void
   kampfberaterOeffnen: () => void
+  fangchanceOeffnen: () => void
   regelnOeffnen: () => void
   encounterOeffnen: () => void
   abenteuerplanOeffnen: () => void
+  itemshopOeffnen: () => void
   challengeZuruecksetzen: () => void
 }) {
   const [fortschritt, setFortschritt] = useState<number | null>(() => {
@@ -545,8 +682,11 @@ function Startseite({
       aktion: kampfberaterOeffnen,
     },
     { titel: 'Encounter-Liste', text: 'Fanggebiete in Spielreihenfolge mit Leveln', symbol: '✓', aktiv: true, aktion: encounterOeffnen },
-    { titel: 'Regeln', text: 'Das vollständige SoulLink-Regelwerk', symbol: '§', aktiv: true, aktion: regelnOeffnen },
+    { titel: 'Fangchance', text: 'Berechne Ball-, Status- und KP-Boni für deinen Fang', symbol: '%', aktiv: true, aktion: fangchanceOeffnen },
     { titel: 'Abenteuerplan', text: 'Schritt für Schritt von Arena zu Arena', symbol: '⌖', aktiv: true, aktion: abenteuerplanOeffnen },
+    { titel: 'Freier Bereich 7', text: 'Vorbereitet für eine weitere hilfreiche Funktion', symbol: '+', aktiv: false, aktion: () => undefined },
+    { titel: 'Regeln', text: 'Das vollständige SoulLink-Regelwerk', symbol: '§', aktiv: true, aktion: regelnOeffnen },
+    { titel: 'Item-Shop', text: 'Items, Pokébälle sowie TM und VM nachschlagen', symbol: '₽', aktiv: true, aktion: itemshopOeffnen },
   ]
 
   return (
@@ -574,7 +714,7 @@ function Startseite({
           <span className="werkzeugleiste__trenner" aria-hidden="true" />
           <span className="ueberzeile">ABENTEUER-WERKZEUGE</span>
         </div>
-        <span className="status"><i /> 6 von 6 verfügbar</span>
+        <span className="status"><i /> {bereiche.filter((bereich) => bereich.aktiv).length} von {bereiche.length} verfügbar</span>
       </nav>
 
       <section className="bereich-auswahl" aria-label="Abenteuer-Werkzeuge">
@@ -672,7 +812,7 @@ function MatchupListe({ titel, eintraege }: { titel: string; eintraege: Matchup[
   )
 }
 
-function DetailFenster({ id, schliessen }: { id: number; schliessen: () => void }) {
+function DetailFenster({ id, schliessen, pokemonOeffnen }: { id: number; schliessen: () => void; pokemonOeffnen: (id: number) => void }) {
   const [details, setDetails] = useState<PokemonDetails | null>(null)
   const [fehler, setFehler] = useState('')
 
@@ -779,9 +919,9 @@ function DetailFenster({ id, schliessen }: { id: number; schliessen: () => void 
                   <span>03</span><div><small>FEUERROT / BLATTGRÜN</small><h3>Attacken durch Levelaufstieg</h3></div>
                 </div>
                 {details.moves.length ? (
-                  <div className="attacken-tabelle">
+                  <><div className="attacken-tabelle">
                     <div className="attacken-zeile attacken-zeile--kopf">
-                      <span>Level</span><span>Attacke</span><span>Typ</span><span>Stärke</span><span>AP</span><span>Genauigkeit</span>
+                      <span>Level</span><span>Attacke</span><span>Typ</span><span>Basisstärke</span><span>AP</span><span>Genauigkeit</span>
                     </div>
                     {details.moves.map((attacke) => (
                       <div className="attacken-zeile" key={`${attacke.name}-${attacke.level}`}>
@@ -795,6 +935,8 @@ function DetailFenster({ id, schliessen }: { id: number; schliessen: () => void 
                       </div>
                     ))}
                   </div>
+                  <p className="attacken-legende"><strong>Basisstärke = Schadenswert der Attacke.</strong> Der tatsächliche KP-Schaden hängt zusätzlich von Level, Kampfwerten, Typenbonus und gegnerischer Verteidigung ab.</p>
+                  </>
                 ) : (
                   <p className="hinweis">In Feuerrot/Blattgrün sind keine Level-Attacken hinterlegt.</p>
                 )}
@@ -808,9 +950,9 @@ function DetailFenster({ id, schliessen }: { id: number; schliessen: () => void 
                   <div className="entwicklung-liste">
                     {details.evolutions.map((schritt) => (
                       <div className="entwicklung" key={`${schritt.fromId}-${schritt.toId}`}>
-                        <div><img src={BILD(schritt.fromId)} alt={POKEMON[schritt.fromId - 1]?.name} /><strong>{POKEMON[schritt.fromId - 1]?.name}</strong></div>
+                        <button className="entwicklung-pokemon" onClick={() => pokemonOeffnen(schritt.fromId)} aria-label={`${POKEMON[schritt.fromId - 1]?.name} im Pokédex öffnen`}><img src={BILD(schritt.fromId)} alt="" /><strong>{POKEMON[schritt.fromId - 1]?.name}</strong><small>Details öffnen</small></button>
                         <span><b>→</b><small>{schritt.condition}</small></span>
-                        <div><img src={BILD(schritt.toId)} alt={POKEMON[schritt.toId - 1]?.name} /><strong>{POKEMON[schritt.toId - 1]?.name}</strong></div>
+                        <button className="entwicklung-pokemon" onClick={() => pokemonOeffnen(schritt.toId)} aria-label={`${POKEMON[schritt.toId - 1]?.name} im Pokédex öffnen`}><img src={BILD(schritt.toId)} alt="" /><strong>{POKEMON[schritt.toId - 1]?.name}</strong><small>Details öffnen</small></button>
                       </div>
                     ))}
                   </div>
@@ -1076,7 +1218,8 @@ function TeamKurzinfo({
             <details className={attacke.level <= level ? 'attacke-verfuegbar' : 'attacke-spaeter'} key={`${attacke.name}-${attacke.level}`}>
               <summary>
                 <b>{attacke.level === 0 ? 'Start' : `Lv. ${attacke.level}`}</b>
-                <span>{attacke.name}<small>AP {attacke.pp ?? '—'} · Genauigkeit {attacke.accuracy ? `${attacke.accuracy} %` : 'trifft immer'}</small></span>
+                <span>{attacke.name}<small>Stärke {attacke.power ?? '—'} · AP {attacke.pp ?? '—'} · Genauigkeit {attacke.accuracy ? `${attacke.accuracy} %` : 'trifft immer'}</small></span>
+                <TypMarke typ={attacke.type} />
                 <i>{attacke.level <= level ? 'ⓘ' : 'später'}</i>
               </summary>
               <p>{attacke.effect}</p>
@@ -1197,7 +1340,7 @@ function PaarZeile({
   )
 }
 
-function Teamplaner({ zurueck }: { zurueck: () => void }) {
+function Teamplaner({ navigation }: { navigation: ReactNode }) {
   const [paare, setPaare] = useState<PokemonPaar[]>(() => {
     try {
       const gespeichert = JSON.parse(localStorage.getItem('feuerrot-teamplaner-paare') ?? '[]') as Partial<PokemonPaar>[]
@@ -1376,13 +1519,13 @@ function Teamplaner({ zurueck }: { zurueck: () => void }) {
   return (
     <main className="teamplaner-seite">
       <header className="teamplaner-kopf">
-        <button className="zurueck" onClick={zurueck}>← Startseite</button>
         <span className="edition">TEAMPLANER · ZWEI TEAMS</span>
         <div className="teamplaner-kopf__zeile">
           <div><h1>Pokémon-Paare planen</h1><p>Verbinde jeweils ein Pokémon aus {nameRot} mit einem Pokémon aus {nameBlau}.</p></div>
           <button className="reset-knopf" onClick={zuruecksetzen} disabled={!hatAenderungen}>↻ Alles zurücksetzen</button>
         </div>
       </header>
+      {navigation}
 
       <section className="teamplaner-inhalt">
         <div className="paar-erstellen">
@@ -1503,8 +1646,6 @@ type KampfErgebnis = {
   gefahr: number
 }
 
-const SPEZIAL_TYPEN = new Set(['fire', 'water', 'grass', 'electric', 'ice', 'psychic', 'dragon', 'dark'])
-
 function gespeichertePaareLesen() {
   try {
     const gespeichert = JSON.parse(localStorage.getItem('feuerrot-teamplaner-paare') ?? '[]') as Partial<PokemonPaar>[]
@@ -1592,6 +1733,188 @@ function kampfWertBerechnen(
     score,
     gefahr: gegnerGefahr,
   }
+}
+
+function neutralerKampfwert(basis: number, level: number, kp = false) {
+  const grundwert = Math.floor(((2 * basis + 31) * level) / 100)
+  return kp ? grundwert + level + 10 : grundwert + 5
+}
+
+function schadensSpanneBerechnen(angreifer: PokemonDetails, angreiferLevel: number, gegner: PokemonDetails, gegnerLevel: number, attacke: LevelMove) {
+  const maxKp = neutralerKampfwert(basiswert(gegner, 'KP'), gegnerLevel, true)
+  const typenWirkung = effektivitaetGegen(attacke.type, gegner)
+  const festeSchaeden: Record<number, number> = { 49: 20, 69: angreiferLevel, 82: 40, 101: angreiferLevel, 162: Math.max(1, Math.floor(maxKp / 2)) }
+  const festerSchaden = festeSchaeden[attacke.id]
+  if (festerSchaden !== undefined) {
+    const wirkung = typenWirkung === 0 ? 0 : 1
+    return { min: wirkung === 0 ? 0 : festerSchaden, max: wirkung === 0 ? 0 : festerSchaden, maxKp, effektivitaet: wirkung, stab: 1, spezial: false }
+  }
+  if (!attacke.power || attacke.power <= 0) return null
+  const spezial = SPEZIAL_TYPEN.has(attacke.type)
+  const angriff = neutralerKampfwert(basiswert(angreifer, spezial ? 'Spezial-Angriff' : 'Angriff'), angreiferLevel)
+  const verteidigung = neutralerKampfwert(basiswert(gegner, spezial ? 'Spezial-Verteidigung' : 'Verteidigung'), gegnerLevel)
+  const effektivitaet = typenWirkung
+  const stab = angreifer.types.includes(attacke.type) ? 1.5 : 1
+  if (effektivitaet === 0) return { min: 0, max: 0, maxKp, effektivitaet, stab, spezial }
+
+  const grundschaden = Math.floor(Math.floor(Math.floor((Math.floor((2 * angreiferLevel) / 5) + 2) * attacke.power * angriff / Math.max(1, verteidigung)) / 50) + 2)
+  const maximal = Math.max(1, Math.floor(grundschaden * stab * effektivitaet))
+  const minimal = Math.max(1, Math.floor(maximal * 217 / 255))
+  return { min: minimal, max: maximal, maxKp, effektivitaet, stab, spezial }
+}
+
+function AttackenEffektChancen({ attacke }: { attacke: LevelMove }) {
+  const genauigkeit = attacke.accuracy ?? 100
+  const effekte: { name: string; symbol: string; beiTreffer: number; gesamt: number }[] = []
+  if (attacke.ailment && attacke.ailmentChance) {
+    const symbole: Record<string, string> = { sleep: 'Zz', paralysis: '⚡', poison: '☠', burn: '🔥', freeze: '❄', confusion: '?' }
+    effekte.push({ name: STATUS_NAMEN[attacke.ailment] ?? fallbackName(attacke.ailment), symbol: symbole[attacke.ailment] ?? '●', beiTreffer: attacke.ailmentChance, gesamt: genauigkeit * attacke.ailmentChance / 100 })
+  }
+  if (attacke.flinchChance) effekte.push({ name: 'Zurückschrecken', symbol: '!', beiTreffer: attacke.flinchChance, gesamt: genauigkeit * attacke.flinchChance / 100 })
+  if (attacke.statChance) effekte.push({ name: 'Wertveränderung', symbol: '↕', beiTreffer: attacke.statChance, gesamt: genauigkeit * attacke.statChance / 100 })
+  if (!effekte.length) return null
+
+  const prozent = (wert: number) => `${Number.isInteger(wert) ? wert : wert.toFixed(1).replace('.', ',')} %`
+  return (
+    <section className="schadens-effektchancen">
+      <header><span>WAHRSCHEINLICHKEIT</span><strong>Effekt bei Einsatz</strong></header>
+      <div>{effekte.map((effekt) => <article key={effekt.name}><i>{effekt.symbol}</i><span><small>{effekt.name}</small><strong>{prozent(effekt.gesamt)} gesamt</strong><em>{prozent(effekt.beiTreffer)} bei Treffer · {attacke.accuracy === null ? 'trifft immer' : `${attacke.accuracy} % Genauigkeit`}</em></span></article>)}</div>
+    </section>
+  )
+}
+
+function AttackenSchadensVorschau({ angreifer, angreiferLevel, gegner, gegnerLevel, attacken, empfohlen }: { angreifer: PokemonDetails; angreiferLevel: number; gegner: PokemonDetails; gegnerLevel: number; attacken: LevelMove[]; empfohlen: number | null }) {
+  const verfuegbareAttacken = useMemo(() => attacken.filter((attacke, index, alle) => alle.findIndex((vergleich) => vergleich.id === attacke.id) === index), [attacken])
+  const [attackenId, setAttackenId] = useState<number | null>(empfohlen)
+
+  useEffect(() => {
+    const bevorzugt = verfuegbareAttacken.find((attacke) => attacke.id === empfohlen)
+    setAttackenId(bevorzugt?.id ?? verfuegbareAttacken[0]?.id ?? null)
+  }, [empfohlen, verfuegbareAttacken])
+
+  const attacke = verfuegbareAttacken.find((eintrag) => eintrag.id === attackenId) ?? null
+  const schaden = attacke ? schadensSpanneBerechnen(angreifer, angreiferLevel, gegner, gegnerLevel, attacke) : null
+  const minProzent = schaden ? Math.min(100, (schaden.min / schaden.maxKp) * 100) : 0
+  const maxProzent = schaden ? Math.min(100, (schaden.max / schaden.maxKp) * 100) : 0
+  const restMin = schaden ? Math.max(0, 100 - maxProzent) : 100
+  const restMax = schaden ? Math.max(0, 100 - minProzent) : 100
+
+  let koText = 'Keine Schadensberechnung möglich'
+  if (schaden) {
+    if (schaden.effektivitaet === 0) koText = 'Keine Wirkung auf diesen Gegner'
+    else if (schaden.min >= schaden.maxKp) koText = 'Sicherer K. o. mit einem Treffer'
+    else if (schaden.max >= schaden.maxKp) koText = 'K. o. mit einem Treffer möglich'
+    else {
+      const schnell = Math.ceil(schaden.maxKp / Math.max(1, schaden.max))
+      const sicher = Math.ceil(schaden.maxKp / Math.max(1, schaden.min))
+      koText = schnell === sicher ? `${sicher} Treffer bis zum K. o.` : `${schnell}–${sicher} Treffer bis zum K. o.`
+    }
+  }
+
+  return (
+    <section className="schadens-vorschau">
+      <header><div><small>ANKLICKBARE ATTACKEN</small><h3>Schaden gegen {gegner.name}</h3></div><span>Neutrale Werte · ohne Volltreffer</span></header>
+      {verfuegbareAttacken.length ? <>
+        <div className="schadens-attacken">
+          {verfuegbareAttacken.map((eintrag) => <button className={eintrag.id === attackenId ? 'aktiv' : ''} key={eintrag.id} onClick={() => setAttackenId(eintrag.id)}><TypMarke typ={eintrag.type} /><span><strong>{eintrag.name}</strong><small>{eintrag.power ? `Stärke ${eintrag.power}` : 'Status / Spezialeffekt'} · {eintrag.accuracy === null ? 'trifft immer' : `${eintrag.accuracy} % genau`}</small></span></button>)}
+        </div>
+        {attacke && schaden && <div className="schadens-anzeige">
+          <div className="schadens-gegner"><img src={BILD(gegner.id)} alt={gegner.name} /><div><small>GEGNER · LEVEL {gegnerLevel}</small><strong>{gegner.name}</strong></div><b>{schaden.maxKp} KP</b></div>
+          <div className="schadens-kp-kopf"><span>Erwartete Rest-KP</span><strong>{Math.round(restMin)}–{Math.round(restMax)} %</strong></div>
+          <div className="schadens-kp-leiste" role="img" aria-label={`${attacke.name} verursacht voraussichtlich ${schaden.min} bis ${schaden.max} Schadenspunkte`}><i style={{ width: `${restMin}%` }} /><em style={{ width: `${Math.max(0, maxProzent - minProzent)}%` }} /><b style={{ width: `${minProzent}%` }} /></div>
+          <div className="schadens-legende"><span><i /> Rest-KP</span><span><i /> mögliche Spanne</span><span><i /> sicherer Schaden</span></div>
+          <div className="schadens-werte"><div><small>SCHADEN</small><strong>{schaden.min}–{schaden.max} KP</strong><span>{Math.round(minProzent)}–{Math.round(maxProzent)} %</span></div><div><small>ERGEBNIS</small><strong>{koText}</strong><span>Typwirkung ×{schaden.effektivitaet} · {schaden.stab > 1 ? 'STAB aktiv' : 'kein STAB'}</span></div></div>
+          <AttackenEffektChancen attacke={attacke} />
+          <p>Die tatsächlichen Werte können durch Wesen, IV, EV, Fähigkeiten, getragene Items, Wetter und Statusveränderungen abweichen.</p>
+        </div>}
+        {attacke && !schaden && <div className="schadens-anzeige schadens-anzeige--status">
+          <div className="schadens-gegner"><img src={BILD(gegner.id)} alt={gegner.name} /><div><small>GEGNER · LEVEL {gegnerLevel}</small><strong>{gegner.name}</strong></div><b>100 % KP</b></div>
+          <div className="schadens-kp-kopf"><span>Verbleibende KP</span><strong>100 %</strong></div>
+          <div className="schadens-kp-leiste" role="img" aria-label={`${attacke.name} verursacht keinen direkt berechenbaren Schaden`}><i style={{ width: '100%' }} /></div>
+          <div className="schadens-statuswirkung"><span>STATUS- ODER EFFEKTATTACKE</span><h4>Kein direkter Standardschaden</h4><p>{attacke.effect}</p><dl><div><dt>Typ</dt><dd><TypMarke typ={attacke.type} /></dd></div><div><dt>Genauigkeit</dt><dd>{attacke.accuracy === null ? 'trifft immer' : `${attacke.accuracy} %`}</dd></div><div><dt>AP</dt><dd>{attacke.pp ?? '—'}</dd></div></dl></div>
+          <AttackenEffektChancen attacke={attacke} />
+        </div>}
+      </> : <p className="schadens-vorschau__leer">Für dieses Pokémon sind noch keine Attacken hinterlegt. Ergänze unten zuerst das echte Attackenset.</p>}
+    </section>
+  )
+}
+
+function GegnerSchadensVorschau({ gegner, gegnerLevel, verteidiger, verteidigerLevel }: { gegner: PokemonDetails; gegnerLevel: number; verteidiger: PokemonDetails; verteidigerLevel: number }) {
+  const [alleAnzeigen, setAlleAnzeigen] = useState(false)
+  const [zusaetzlicheAttacken, setZusaetzlicheAttacken] = useState<LevelMove[]>([])
+  const [suche, setSuche] = useState('')
+  const [attackenId, setAttackenId] = useState<number | null>(null)
+
+  const levelAttacken = useMemo(() => gegner.moves
+    .filter((attacke) => attacke.level <= gegnerLevel)
+    .filter((attacke, index, alle) => alle.findIndex((vergleich) => vergleich.id === attacke.id) === index), [gegner, gegnerLevel])
+  const wahrscheinlicheAttacken = levelAttacken.slice(-4)
+  const angezeigteLevelAttacken = alleAnzeigen ? [...wahrscheinlicheAttacken, ...levelAttacken.filter((attacke) => !wahrscheinlicheAttacken.some((wahrscheinlich) => wahrscheinlich.id === attacke.id)).reverse()] : wahrscheinlicheAttacken
+  const angezeigteAttacken = [...angezeigteLevelAttacken, ...zusaetzlicheAttacken.filter((attacke) => !angezeigteLevelAttacken.some((eintrag) => eintrag.id === attacke.id))]
+
+  useEffect(() => {
+    const staerkste = [...wahrscheinlicheAttacken].sort((a, b) => (schadensSpanneBerechnen(gegner, gegnerLevel, verteidiger, verteidigerLevel, b)?.max ?? 0) - (schadensSpanneBerechnen(gegner, gegnerLevel, verteidiger, verteidigerLevel, a)?.max ?? 0))[0]
+    setAttackenId(staerkste?.id ?? wahrscheinlicheAttacken[0]?.id ?? null)
+    setZusaetzlicheAttacken([])
+    setSuche('')
+    setAlleAnzeigen(false)
+  }, [gegner.id, gegnerLevel, verteidiger.id, verteidigerLevel])
+
+  const attacke = angezeigteAttacken.find((eintrag) => eintrag.id === attackenId) ?? wahrscheinlicheAttacken.find((eintrag) => eintrag.id === attackenId) ?? null
+  const schaden = attacke ? schadensSpanneBerechnen(gegner, gegnerLevel, verteidiger, verteidigerLevel, attacke) : null
+  const minProzent = schaden ? Math.min(100, (schaden.min / schaden.maxKp) * 100) : 0
+  const maxProzent = schaden ? Math.min(100, (schaden.max / schaden.maxKp) * 100) : 0
+  const restMin = schaden ? Math.max(0, 100 - maxProzent) : 100
+  const restMax = schaden ? Math.max(0, 100 - minProzent) : 100
+
+  let risikoText = 'Kein direkter Schaden'
+  if (schaden) {
+    if (schaden.effektivitaet === 0) risikoText = `${verteidiger.name} ist immun`
+    else if (schaden.min >= schaden.maxKp) risikoText = 'Sicherer One-Hit gegen dein Pokémon'
+    else if (schaden.max >= schaden.maxKp) risikoText = 'One-Hit gegen dein Pokémon möglich'
+    else {
+      const schnell = Math.ceil(schaden.maxKp / Math.max(1, schaden.max))
+      const sicher = Math.ceil(schaden.maxKp / Math.max(1, schaden.min))
+      risikoText = schnell === sicher ? `Dein Pokémon hält etwa ${sicher} Treffer aus` : `Dein Pokémon hält etwa ${schnell}–${sicher} Treffer aus`
+    }
+  }
+
+  const suchbegriff = suchText(suche.trim())
+  const suchErgebnisse = suchbegriff ? ATTACKEN.filter((eintrag) => suchText(`${eintrag.name} ${eintrag.identifier}`).includes(suchbegriff) && !angezeigteAttacken.some((attacke) => attacke.id === eintrag.id)).slice(0, 8) : []
+
+  function attackeErgaenzen(id: number) {
+    void laden<MoveApi>(`${API}/move/${id}`).then((daten) => {
+      const neu = moveApiAlsAttacke(daten)
+      setZusaetzlicheAttacken((aktuell) => [...aktuell.filter((eintrag) => eintrag.id !== neu.id), neu])
+      setAttackenId(neu.id)
+      setSuche('')
+    })
+  }
+
+  return (
+    <section className="gegner-schadens-vorschau">
+      <header><div><small>GEGENANGRIFF PRÜFEN</small><h3>Was hält {verteidiger.name} aus?</h3></div><span>Ohne Volltreffer · mögliche Level-Attacken</span></header>
+      {wahrscheinlicheAttacken.length || zusaetzlicheAttacken.length ? <>
+        <div className="gegner-attacken-kopf"><strong>Voraussichtliche Attacken von {gegner.name}</strong><span>bis Level {gegnerLevel}</span></div>
+        <div className="schadens-attacken gegner-schadens-attacken">
+          {angezeigteAttacken.map((eintrag) => <button className={eintrag.id === attackenId ? 'aktiv' : ''} key={eintrag.id} onClick={() => setAttackenId(eintrag.id)}><TypMarke typ={eintrag.type} /><span><strong>{eintrag.name}</strong><small>{eintrag.power ? `Stärke ${eintrag.power}` : 'Status / Spezialeffekt'} · {eintrag.accuracy === null ? 'trifft immer' : `${eintrag.accuracy} % genau`}</small></span></button>)}
+        </div>
+        {levelAttacken.length > 4 && <button className="gegner-attacken-mehr" onClick={() => setAlleAnzeigen((aktuell) => !aktuell)}>{alleAnzeigen ? 'Nur wahrscheinliches Set anzeigen' : `${levelAttacken.length - 4} weitere mögliche Level-Attacken anzeigen`}</button>}
+
+        {attacke && schaden && <div className="schadens-anzeige schadens-anzeige--gefahr">
+          <div className="schadens-gegner"><img src={BILD(verteidiger.id)} alt={verteidiger.name} /><div><small>DEIN POKÉMON · LEVEL {verteidigerLevel}</small><strong>{verteidiger.name}</strong></div><b>{schaden.maxKp} KP</b></div>
+          <div className="schadens-kp-kopf"><span>Erwartete Rest-KP nach {attacke.name}</span><strong>{Math.round(restMin)}–{Math.round(restMax)} %</strong></div>
+          <div className="schadens-kp-leiste" role="img" aria-label={`${attacke.name} verursacht deinem Pokémon voraussichtlich ${schaden.min} bis ${schaden.max} Schadenspunkte`}><i style={{ width: `${restMin}%` }} /><em style={{ width: `${Math.max(0, maxProzent - minProzent)}%` }} /><b style={{ width: `${minProzent}%` }} /></div>
+          <div className="schadens-legende"><span><i /> Rest-KP</span><span><i /> mögliche Spanne</span><span><i /> sicherer Schaden</span></div>
+          <div className="schadens-werte"><div><small>EINGEHENDER SCHADEN</small><strong>{schaden.min}–{schaden.max} KP</strong><span>{Math.round(minProzent)}–{Math.round(maxProzent)} %</span></div><div className={schaden.max >= schaden.maxKp ? 'schadens-risiko--hoch' : ''}><small>RISIKO</small><strong>{risikoText}</strong><span>Typwirkung ×{schaden.effektivitaet} · {schaden.stab > 1 ? 'Gegner-STAB aktiv' : 'kein Gegner-STAB'}</span></div></div>
+          <AttackenEffektChancen attacke={attacke} />
+          <p>Trainer können abweichende Attackensets besitzen. Die Anzeige verwendet neutrale Werte und berücksichtigt keine Volltreffer, Wesen, IV, EV, Fähigkeiten, Items, Wetter oder Wertveränderungen.</p>
+        </div>}
+        {attacke && !schaden && <div className="schadens-anzeige schadens-anzeige--gefahr schadens-anzeige--status"><div className="schadens-gegner"><img src={BILD(verteidiger.id)} alt={verteidiger.name} /><div><small>DEIN POKÉMON · LEVEL {verteidigerLevel}</small><strong>{verteidiger.name}</strong></div><b>100 % KP</b></div><div className="schadens-kp-kopf"><span>Verbleibende KP</span><strong>100 %</strong></div><div className="schadens-kp-leiste"><i style={{ width: '100%' }} /></div><div className="schadens-statuswirkung"><span>STATUS- ODER EFFEKTATTACKE</span><h4>Kein direkter Standardschaden</h4><p>{attacke.effect}</p><dl><div><dt>Typ</dt><dd><TypMarke typ={attacke.type} /></dd></div><div><dt>Genauigkeit</dt><dd>{attacke.accuracy === null ? 'trifft immer' : `${attacke.accuracy} %`}</dd></div><div><dt>AP</dt><dd>{attacke.pp ?? '—'}</dd></div></dl></div><AttackenEffektChancen attacke={attacke} /></div>}
+      </> : <p className="schadens-vorschau__leer">Für {gegner.name} wurden bis zu diesem Level keine Level-Attacken gefunden. Du kannst unten eine bekannte Attacke manuell ergänzen.</p>}
+      <div className="gegner-attacke-suche"><label htmlFor="gegner-attacke-suche">Andere bekannte Gegnerattacke ergänzen</label><input id="gegner-attacke-suche" type="search" value={suche} onChange={(event) => setSuche(event.target.value)} placeholder="Attacke suchen, falls du das echte Set kennst …" />{suchErgebnisse.length > 0 && <div>{suchErgebnisse.map((eintrag) => <button key={eintrag.id} onClick={() => attackeErgaenzen(eintrag.id)}><span>{eintrag.name}</span><small>Attacke hinzufügen</small></button>)}</div>}</div>
+    </section>
+  )
 }
 
 function TeamVorschau({
@@ -1735,7 +2058,7 @@ function AttackenAuswahl({
               disabled={!ausgewaehlt.includes(attacke.id) && ausgewaehlt.length >= 4}
             >
               <b>{attacke.level === 0 ? 'Start' : `Lv. ${attacke.level}`}</b>
-              <span><strong>{attacke.name}</strong><small>AP {attacke.pp ?? '—'} · Gen. {attacke.accuracy ? `${attacke.accuracy} %` : 'trifft immer'}</small><em>{attacke.effect}</em></span>
+              <span><strong>{attacke.name}</strong><TypMarke typ={attacke.type} /><small>Stärke {attacke.power ?? '—'} · AP {attacke.pp ?? '—'} · Gen. {attacke.accuracy ? `${attacke.accuracy} %` : 'trifft immer'}</small><em>{attacke.effect}</em></span>
               <i>{ausgewaehlt.includes(attacke.id) ? '✓' : '+'}</i>
             </button>
           )) : <p>Für dieses Level wurde keine Level-Attacke gefunden. Du kannst unten frei suchen.</p>}
@@ -1762,11 +2085,11 @@ function AttackenAuswahl({
 }
 
 function Kampfberater({
-  zurueck,
   teamplanerOeffnen,
+  navigation,
 }: {
-  zurueck: () => void
   teamplanerOeffnen: () => void
+  navigation: ReactNode
 }) {
   const [paare] = useState<PokemonPaar[]>(gespeichertePaareLesen)
   const [namen] = useState(gespeicherteNamenLesen)
@@ -1779,6 +2102,8 @@ function Kampfberater({
   const [attackenIds, setAttackenIds] = useState<number[]>([])
   const [nachpruefung, setNachpruefung] = useState<KampfErgebnis[]>([])
   const [prueftAttacken, setPrueftAttacken] = useState(false)
+  const [gegnerDetails, setGegnerDetails] = useState<PokemonDetails | null>(null)
+  const [rechnerAttacken, setRechnerAttacken] = useState<LevelMove[]>([])
 
   const aktivePaare = paare.filter((paar) => paar.aktiv && paar.slot !== null)
   const teamRot: TeamMitglied[] = aktivePaare.map((paar) => ({ id: paar.links, level: paar.levelLinks, slot: paar.slot ?? 0, attacken: paar.attackenLinks, itemId: paar.itemLinks }))
@@ -1793,6 +2118,8 @@ function Kampfberater({
     setErgebnisse([])
     setAttackenIds([])
     setNachpruefung([])
+    setGegnerDetails(null)
+    setRechnerAttacken([])
 
     try {
       const [gegner, ...teamDetails] = await Promise.all([
@@ -1814,6 +2141,10 @@ function Kampfberater({
       setErgebnisse(bewertungen)
       const bestesMitglied = ausgewaehltesTeam.find((mitglied) => mitglied.id === bewertungen[0]?.pokemon.id && mitglied.slot === bewertungen[0]?.slot)
       setAttackenIds(bestesMitglied?.attacken ?? [])
+      const besterIndex = ausgewaehltesTeam.findIndex((mitglied) => mitglied.slot === bewertungen[0]?.slot && mitglied.id === bewertungen[0]?.pokemon.id)
+      const moeglicheAttacken = besterIndex >= 0 ? verwendeteAttacken[besterIndex] : []
+      setRechnerAttacken([...moeglicheAttacken].sort((a, b) => (a.id === bewertungen[0]?.attacke?.id ? -1 : b.id === bewertungen[0]?.attacke?.id ? 1 : (b.power ?? 0) - (a.power ?? 0))))
+      setGegnerDetails(gegner)
     } catch (error) {
       setFehler(error instanceof Error ? error.message : 'Die Kampfanalyse ist fehlgeschlagen.')
     } finally {
@@ -1846,11 +2177,11 @@ function Kampfberater({
   return (
     <main className="kampfberater-seite">
       <header className="kampfberater-kopf">
-        <button className="zurueck" onClick={zurueck}>← Startseite</button>
         <span className="edition">DEIN CHEATCODE · KAMPFBERATER</span>
         <h1>Der nächste beste Zug</h1>
         <p>Wähle dein Team und den aktuellen Gegner. Die App vergleicht Typen, Level, Werte und mögliche Attacken.</p>
       </header>
+      {navigation}
 
       <section className="kampfberater-inhalt">
         {!aktivePaare.length ? (
@@ -1864,16 +2195,16 @@ function Kampfberater({
             <section className="berater-schritt">
               <div className="berater-schritt__titel"><span>01</span><div><small>TEAMPLANER</small><h2>Welches Team kämpft?</h2></div></div>
               <div className="berater-teams">
-                <TeamVorschau name={namen.rot || 'Team Rot'} farbe="rot" mitglieder={teamRot} aktiv={team === 'rot'} onAuswaehlen={() => { setTeam('rot'); setErgebnisse([]); setAttackenIds([]); setNachpruefung([]) }} />
-                <TeamVorschau name={namen.blau || 'Team Blau'} farbe="blau" mitglieder={teamBlau} aktiv={team === 'blau'} onAuswaehlen={() => { setTeam('blau'); setErgebnisse([]); setAttackenIds([]); setNachpruefung([]) }} />
+                <TeamVorschau name={namen.rot || 'Team Rot'} farbe="rot" mitglieder={teamRot} aktiv={team === 'rot'} onAuswaehlen={() => { setTeam('rot'); setErgebnisse([]); setAttackenIds([]); setNachpruefung([]); setGegnerDetails(null); setRechnerAttacken([]) }} />
+                <TeamVorschau name={namen.blau || 'Team Blau'} farbe="blau" mitglieder={teamBlau} aktiv={team === 'blau'} onAuswaehlen={() => { setTeam('blau'); setErgebnisse([]); setAttackenIds([]); setNachpruefung([]); setGegnerDetails(null); setRechnerAttacken([]) }} />
               </div>
             </section>
 
             <section className="berater-schritt berater-schritt--gegner">
               <div className="berater-schritt__titel"><span>02</span><div><small>AKTUELLER KAMPF</small><h2>Gegner festlegen</h2></div></div>
               <div className="gegner-eingabe">
-                <PokemonSuche titel="Gegnerisches Pokémon" farbe="rot" ausgewaehlt={gegnerId} gesperrt={[]} onAuswaehlen={(id) => { setGegnerId(id); setErgebnisse([]); setAttackenIds([]); setNachpruefung([]) }} />
-                <div className="gegner-level-feld"><span>Level des Gegners</span><LevelWaehler level={gegnerLevel} onAendern={(level) => { setGegnerLevel(level); setErgebnisse([]); setAttackenIds([]); setNachpruefung([]) }} /></div>
+                <PokemonSuche titel="Gegnerisches Pokémon" farbe="rot" ausgewaehlt={gegnerId} gesperrt={[]} onAuswaehlen={(id) => { setGegnerId(id); setErgebnisse([]); setAttackenIds([]); setNachpruefung([]); setGegnerDetails(null); setRechnerAttacken([]) }} />
+                <div className="gegner-level-feld"><span>Level des Gegners</span><LevelWaehler level={gegnerLevel} onAendern={(level) => { setGegnerLevel(level); setErgebnisse([]); setAttackenIds([]); setNachpruefung([]); setGegnerDetails(null); setRechnerAttacken([]) }} /></div>
               </div>
               <button className="analyse-knopf" onClick={kampfAnalysieren} disabled={!gegnerId || laedt}>
                 {laedt ? 'Kampf wird analysiert …' : `${ausgewaehlterName} analysieren`}
@@ -1896,7 +2227,7 @@ function Kampfberater({
                     <h3>{empfehlung.attacke?.name ?? 'Keine Schadensattacke verfügbar'}</h3>
                     {empfehlung.attacke && <TypMarke typ={empfehlung.attacke.type} />}
                     <dl>
-                      <div><dt>Stärke</dt><dd>{empfehlung.attacke?.power ?? '—'}</dd></div>
+                      <div><dt>Basisstärke</dt><dd>{empfehlung.attacke?.power ?? '—'}</dd></div>
                       <div><dt>AP</dt><dd>{empfehlung.attacke?.pp ?? '—'}</dd></div>
                       <div><dt>Genauigkeit</dt><dd>{empfehlung.attacke?.accuracy ? `${empfehlung.attacke.accuracy} %` : '—'}</dd></div>
                       <div><dt>Typwirkung</dt><dd>×{empfehlung.effektivitaet}</dd></div>
@@ -1905,6 +2236,9 @@ function Kampfberater({
                     <p>{empfehlung.effektivitaet > 1 ? 'Die Attacke trifft sehr effektiv.' : empfehlung.effektivitaet < 1 ? 'Es gibt keine stärkere bereits erlernbare Alternative im Team.' : 'Die Attacke bietet den besten Gesamtwert aus Typ, Stärke und Basiswerten.'} {empfehlung.gefahr <= 1 ? `${empfehlung.pokemon.name} besitzt außerdem eine günstige defensive Typenlage.` : 'Achte trotzdem auf einen möglichen Typennachteil beim Gegenangriff.'}</p>
                   </div>
                 </div>
+
+                {gegnerDetails && <AttackenSchadensVorschau angreifer={empfehlung.pokemon} angreiferLevel={empfehlung.level} gegner={gegnerDetails} gegnerLevel={gegnerLevel} attacken={rechnerAttacken} empfohlen={empfehlung.attacke?.id ?? null} />}
+                {gegnerDetails && <GegnerSchadensVorschau gegner={gegnerDetails} gegnerLevel={gegnerLevel} verteidiger={empfehlung.pokemon} verteidigerLevel={empfehlung.level} />}
 
                 <div className="alternativen">
                   <h3>Weitere Möglichkeiten</h3>
@@ -1928,7 +2262,12 @@ function Kampfberater({
                     pokemon={empfehlung.pokemon}
                     level={empfehlung.level}
                     ausgewaehlt={attackenIds}
-                    onAendern={(ids) => { setAttackenIds(ids); setNachpruefung([]) }}
+                    onAendern={(ids) => {
+                      setAttackenIds(ids)
+                      setNachpruefung([])
+                      if (!ids.length) setRechnerAttacken([])
+                      else void attackenIdsLaden(ids).then(setRechnerAttacken).catch(() => setRechnerAttacken([]))
+                    }}
                   />
                   <p className="freie-attacken-hinweis">Freie Eingabe: Bei manuell gesuchten Attacken prüft die App nicht, ob dieses Pokémon die Attacke im Spiel wirklich erlernen kann.</p>
                   <button className="neu-pruefen" onClick={echteAttackenPruefen} disabled={!attackenIds.length || prueftAttacken}>
@@ -2207,7 +2546,7 @@ function KantoKarte({ info, nurLeuchten = false, markerAnzeigen = true }: { info
   )
 }
 
-function AbenteuerPlan({ zurueck }: { zurueck: () => void }) {
+function AbenteuerPlan({ navigation }: { navigation: ReactNode }) {
   const startIndex = (() => {
     const eigener = localStorage.getItem('feuerrot-abenteuer-etappe')
     const arena = localStorage.getItem('feuerrot-arenen-fortschritt')
@@ -2246,7 +2585,8 @@ function AbenteuerPlan({ zurueck }: { zurueck: () => void }) {
 
   return (
     <main className="abenteuer-seite">
-      <header className="abenteuer-kopf"><button className="zurueck" onClick={zurueck}>← Startseite</button><span className="edition">FEUERROT · SOULLINK-ABENTEUERPLAN</span><h1>Von Arena zu Arena.</h1><p>Ein überschaubarer roter Faden durch Kanto. Hake die wichtigsten Schritte ab und behalte Regeln, Begegnungen und Level-Caps im Blick.</p></header>
+      <header className="abenteuer-kopf"><span className="edition">FEUERROT · SOULLINK-ABENTEUERPLAN</span><h1>Von Arena zu Arena.</h1><p>Ein überschaubarer roter Faden durch Kanto. Hake die wichtigsten Schritte ab und behalte Regeln, Begegnungen und Level-Caps im Blick.</p></header>
+      {navigation}
       <section className="abenteuer-inhalt">
         <div className="abenteuer-gesamt"><div><small>GESAMTFORTSCHRITT</small><strong>{gesamtFertig} von {allePunkte} Schritten</strong></div><span><i style={{ width: `${(gesamtFertig / allePunkte) * 100}%` }} /></span></div>
         <nav className="etappen-leiste" aria-label="Abenteuerabschnitt auswählen">{ABENTEUER_ETAPPEN.map((eintrag, index) => { const fertig = eintrag.punkte.every((_, punkt) => erledigt[`${index}-${punkt}`]); return <button className={`${etappeIndex === index ? 'aktiv' : ''} ${fertig ? 'fertig' : ''}`} key={eintrag.name} onClick={() => wechseln(index)}>{index < 8 ? <OrdenSymbol index={index} /> : <LigaSymbol index={index - 8} />}<small>{eintrag.name}</small></button> })}</nav>
@@ -2366,7 +2706,7 @@ const ENCOUNTER_KARTEN_ORTE: EncounterKartenOrt[] = [
   { id: 'gebiet-sevii', name: 'Sevii-Eilande', x: 125, y: 390, gebiete: ['schatzstrand', 'gluehweg', 'glutberg', 'kap-kante', 'dreierinsel-hafen', 'bundbruecke', 'beerenforst'], art: 'gebiet' },
 ]
 
-function BegegnungsTracker({ zurueck }: { zurueck: () => void }) {
+function BegegnungsTracker({ navigation }: { navigation: ReactNode }) {
   const [erledigt, setErledigt] = useState<Record<string, boolean>>(() => {
     try {
       return JSON.parse(localStorage.getItem('feuerrot-encounter-checkliste') ?? '{}') as Record<string, boolean>
@@ -2398,11 +2738,11 @@ function BegegnungsTracker({ zurueck }: { zurueck: () => void }) {
   return (
     <main className="begegnungen-seite">
       <header className="begegnungen-kopf">
-        <button className="zurueck" onClick={zurueck}>← Startseite</button>
         <span className="edition">FEUERROT · ENCOUNTER-CHECKLISTE</span>
         <h1>Jedes Fanggebiet. In richtiger Reihenfolge.</h1>
         <p>Hake ein Gebiet ab, sobald euer Erstbegegnungs-Versuch abgeschlossen ist. Die Level zeigen die Spanne der regulären Feuerrot-Begegnungen vor dem Randomisieren.</p>
       </header>
+      {navigation}
 
       <section className="begegnungen-inhalt">
         <div className="encounter-fortschritt">
@@ -2473,7 +2813,7 @@ function CapTeam({ name, farbe, mitglieder, auswahl, onAuswahl }: { name: string
   )
 }
 
-function CapWaechter({ zurueck, teamplanerOeffnen }: { zurueck: () => void; teamplanerOeffnen: () => void }) {
+function CapWaechter({ zurueck, teamplanerOeffnen, navigation }: { zurueck: () => void; teamplanerOeffnen: () => void; navigation: ReactNode }) {
   const [paare] = useState<PokemonPaar[]>(gespeichertePaareLesen)
   const [namen] = useState(gespeicherteNamenLesen)
   const [capPokemon, setCapPokemon] = useState<{ rot: string; blau: string }>(() => {
@@ -2503,7 +2843,8 @@ function CapWaechter({ zurueck, teamplanerOeffnen }: { zurueck: () => void; team
 
   return (
     <main className="cap-seite">
-      <header className="cap-kopf"><button className="zurueck" onClick={zurueck}>← Startseite</button><span className="edition">REGEL 09 · LEVEL-CAP-WÄCHTER</span><h1>Trainieren, ohne zu überleveln.</h1><p>Der Wächter verbindet euren Arenenfortschritt mit den Leveln im Teamplaner und sperrt bei einem Verstoß automatisch das gesamte Seelenpaar.</p></header>
+      <header className="cap-kopf"><span className="edition">REGEL 09 · LEVEL-CAP-WÄCHTER</span><h1>Trainieren, ohne zu überleveln.</h1><p>Der Wächter verbindet euren Arenenfortschritt mit den Leveln im Teamplaner und sperrt bei einem Verstoß automatisch das gesamte Seelenpaar.</p></header>
+      {navigation}
       <section className="cap-inhalt">
         {!abschnitt ? <div className="cap-leer"><strong>Noch kein Arenenfortschritt ausgewählt</strong><p>Wähle auf der Startseite zuerst die nächste Arena oder den nächsten Liga-Kampf.</p><button onClick={zurueck}>Zur Startseite</button></div>
         : !aktiv.length ? <div className="cap-leer"><strong>Noch kein aktives Team vorhanden</strong><p>Lege im Teamplaner zuerst mindestens ein aktives Seelenpaar an.</p><button onClick={teamplanerOeffnen}>Zum Teamplaner</button></div>
@@ -2638,7 +2979,350 @@ const SOULLINK_REGELN: SoulLinkRegel[] = [
   },
 ]
 
-function Regeln({ zurueck }: { zurueck: () => void }) {
+type FangBallId = 'poke-ball' | 'great-ball' | 'ultra-ball' | 'master-ball' | 'net-ball' | 'nest-ball' | 'repeat-ball' | 'timer-ball' | 'premier-ball' | 'luxury-ball'
+type FangStatus = 'keiner' | 'schlaf' | 'eingefroren' | 'paralyse' | 'vergiftung' | 'verbrennung'
+
+const FANG_BAELLE: { id: FangBallId; name: string; kurz: string }[] = [
+  { id: 'poke-ball', name: 'Pokéball', kurz: '×1' },
+  { id: 'great-ball', name: 'Superball', kurz: '×1,5' },
+  { id: 'ultra-ball', name: 'Hyperball', kurz: '×2' },
+  { id: 'master-ball', name: 'Meisterball', kurz: 'Garantiert' },
+  { id: 'net-ball', name: 'Netzball', kurz: '×3 bei Wasser/Käfer' },
+  { id: 'nest-ball', name: 'Nestball', kurz: 'Stärker bei niedrigem Level' },
+  { id: 'repeat-ball', name: 'Wiederball', kurz: '×3 wenn schon gefangen' },
+  { id: 'timer-ball', name: 'Timerball', kurz: 'Stärker mit jeder Runde' },
+  { id: 'premier-ball', name: 'Premierball', kurz: '×1' },
+  { id: 'luxury-ball', name: 'Luxusball', kurz: '×1' },
+]
+
+const FANG_STATUS: { id: FangStatus; name: string; symbol: string; bonus: number }[] = [
+  { id: 'keiner', name: 'Keiner', symbol: '—', bonus: 1 },
+  { id: 'schlaf', name: 'Schlaf', symbol: 'Zz', bonus: 2 },
+  { id: 'eingefroren', name: 'Eingefroren', symbol: '❄', bonus: 2 },
+  { id: 'paralyse', name: 'Paralyse', symbol: '⚡', bonus: 1.5 },
+  { id: 'vergiftung', name: 'Vergiftung', symbol: '☠', bonus: 1.5 },
+  { id: 'verbrennung', name: 'Verbrennung', symbol: '🔥', bonus: 1.5 },
+]
+
+function FangchanceRechner({ navigation }: { navigation: ReactNode }) {
+  const [pokemonId, setPokemonId] = useState<number | null>(null)
+  const [level, setLevel] = useState(20)
+  const [kpProzent, setKpProzent] = useState(100)
+  const [ball, setBall] = useState<FangBallId>('poke-ball')
+  const [status, setStatus] = useState<FangStatus>('keiner')
+  const [bereitsGefangen, setBereitsGefangen] = useState(false)
+  const [runden, setRunden] = useState(0)
+  const [fangrate, setFangrate] = useState<number | null>(null)
+  const [typen, setTypen] = useState<string[]>([])
+  const [laedt, setLaedt] = useState(false)
+  const [fehler, setFehler] = useState('')
+
+  const pokemon = pokemonId ? POKEMON[pokemonId - 1] : null
+
+  useEffect(() => {
+    let aktiv = true
+    if (!pokemonId) {
+      setFangrate(null)
+      setTypen([])
+      setFehler('')
+      return () => { aktiv = false }
+    }
+
+    setLaedt(true)
+    setFehler('')
+    Promise.all([
+      laden<SpeciesApi>(`${API}/pokemon-species/${pokemonId}`),
+      laden<PokemonApi>(`${API}/pokemon/${pokemonId}`),
+    ]).then(([art, daten]) => {
+      if (!aktiv) return
+      setFangrate(art.capture_rate)
+      setTypen(typenFuerGeneration(daten).map((eintrag) => eintrag.type.name))
+    }).catch(() => {
+      if (aktiv) setFehler('Die Fangdaten konnten nicht geladen werden.')
+    }).finally(() => {
+      if (aktiv) setLaedt(false)
+    })
+
+    return () => { aktiv = false }
+  }, [pokemonId])
+
+  const ergebnis = useMemo(() => {
+    if (fangrate === null) return null
+
+    let ballBonus = 1
+    let ballHinweis = 'Normaler Fangbonus'
+    if (ball === 'great-ball') ballBonus = 1.5
+    if (ball === 'ultra-ball') ballBonus = 2
+    if (ball === 'net-ball') {
+      const wirkt = typen.some((typ) => typ === 'water' || typ === 'bug')
+      ballBonus = wirkt ? 3 : 1
+      ballHinweis = wirkt ? 'Netzball-Bonus aktiv' : 'Kein Wasser- oder Käfer-Typ'
+    }
+    if (ball === 'nest-ball') {
+      ballBonus = Math.max((40 - level) / 10, 1)
+      ballHinweis = level < 30 ? 'Nestball-Bonus durch niedriges Level' : 'Ab Level 30 kein Zusatzbonus'
+    }
+    if (ball === 'repeat-ball') {
+      ballBonus = bereitsGefangen ? 3 : 1
+      ballHinweis = bereitsGefangen ? 'Wiederball-Bonus aktiv' : 'Noch nicht als gefangen markiert'
+    }
+    if (ball === 'timer-ball') {
+      ballBonus = Math.min((Math.max(0, runden) + 10) / 10, 4)
+      ballHinweis = `Bonus nach ${runden} ${runden === 1 ? 'Runde' : 'Runden'}`
+    }
+
+    const statusBonus = FANG_STATUS.find((eintrag) => eintrag.id === status)?.bonus ?? 1
+    const meisterball = ball === 'master-ball'
+    const fangwert = meisterball
+      ? 255
+      : Math.min(255, Math.max(1, Math.floor(((300 - (2 * kpProzent)) / 300) * fangrate * ballBonus * statusBonus)))
+    let chance = 100
+    if (!meisterball && fangwert < 255) {
+      const wackelGrenze = Math.floor(1048560 / Math.sqrt(Math.sqrt(16711680 / fangwert)))
+      chance = Math.pow(Math.min(wackelGrenze, 65536) / 65536, 4) * 100
+    }
+
+    const bewertung = chance >= 100 ? 'Garantiert' : chance >= 65 ? 'Sehr gut' : chance >= 35 ? 'Gut' : chance >= 15 ? 'Mittel' : chance >= 5 ? 'Niedrig' : 'Sehr niedrig'
+    return { chance, ballBonus, statusBonus, fangwert, ballHinweis, bewertung }
+  }, [ball, bereitsGefangen, fangrate, kpProzent, level, runden, status, typen])
+
+  return (
+    <main className="fangchance-seite">
+      <header className="fangchance-kopf">
+        <span className="edition">FEUERROT · FANGCHANCE-RECHNER</span>
+        <h1>Wie sicher sitzt der nächste Ball?</h1>
+        <p>Wähle Pokémon, KP, Status und Pokéball. Der Rechner verwendet die Fangformel aus Pokémon Feuerrot.</p>
+      </header>
+      {navigation}
+
+      <section className="fangchance-inhalt">
+        <div className="fangchance-raster">
+          <div className="fangchance-eingaben">
+            <section className="fangchance-block fangchance-pokemonwahl">
+              <header><span>01</span><div><h2>Pokémon auswählen</h2><p>Die Grund-Fangrate unterscheidet sich je nach Pokémon.</p></div></header>
+              <PokemonSuche titel="Wildes Pokémon" farbe="rot" ausgewaehlt={pokemonId} gesperrt={[]} onAuswaehlen={setPokemonId} />
+              {pokemon && <div className="fangchance-pokemoninfo"><img src={BILD(pokemon.id)} alt={pokemon.name} /><div><small>{nummer(pokemon.id)}</small><strong>{pokemon.name}</strong><span>{typen.map((typ) => <TypMarke typ={typ} key={typ} />)}</span></div><dl><dt>Grund-Fangrate</dt><dd>{fangrate ?? '…'} / 255</dd></dl></div>}
+              {fehler && <p className="fangchance-fehler">{fehler}</p>}
+            </section>
+
+            <section className="fangchance-block">
+              <header><span>02</span><div><h2>Kampfsituation</h2><p>Wenig KP und ein Statusproblem erhöhen die Chance deutlich.</p></div></header>
+              <div className="fangchance-werte">
+                <label><span>Level</span><input type="number" min="1" max="100" value={level} onChange={(event) => setLevel(Math.min(100, Math.max(1, Number(event.target.value) || 1)))} /><small>Nur für den Nestball wichtig</small></label>
+                <label><span>Verbleibende KP</span><div><input type="range" min="1" max="100" value={kpProzent} onChange={(event) => setKpProzent(Number(event.target.value))} /><input type="number" min="1" max="100" value={kpProzent} onChange={(event) => setKpProzent(Math.min(100, Math.max(1, Number(event.target.value) || 1)))} /><b>%</b></div><small>Am genauesten ist der aktuelle KP-Prozentwert</small></label>
+              </div>
+              <div className="fangchance-untertitel"><strong>Status</strong><span>Schlaf und Einfrieren wirken am stärksten</span></div>
+              <div className="fangchance-status">
+                {FANG_STATUS.map((eintrag) => <button className={status === eintrag.id ? 'aktiv' : ''} key={eintrag.id} onClick={() => setStatus(eintrag.id)}><i>{eintrag.symbol}</i><span>{eintrag.name}</span><small>×{String(eintrag.bonus).replace('.', ',')}</small></button>)}
+              </div>
+            </section>
+
+            <section className="fangchance-block">
+              <header><span>03</span><div><h2>Pokéball auswählen</h2><p>Sonderbälle erhalten ihren Feuerrot-Bonus automatisch.</p></div></header>
+              <div className="fangchance-baelle">
+                {FANG_BAELLE.map((eintrag) => <button className={ball === eintrag.id ? 'aktiv' : ''} key={eintrag.id} onClick={() => setBall(eintrag.id)}><img src={ITEM_BILD(eintrag.id)} alt="" /><span><strong>{eintrag.name}</strong><small>{eintrag.kurz}</small></span></button>)}
+              </div>
+              {ball === 'repeat-ball' && <label className="fangchance-zusatz"><input type="checkbox" checked={bereitsGefangen} onChange={(event) => setBereitsGefangen(event.target.checked)} /><span><strong>Pokémon bereits gefangen</strong><small>Der Wiederball erhält dann seinen ×3-Bonus.</small></span></label>}
+              {ball === 'timer-ball' && <label className="fangchance-zusatz fangchance-runden"><span><strong>Vergangene Kampfrunden</strong><small>Ab 30 Runden ist der maximale ×4-Bonus erreicht.</small></span><input type="number" min="0" max="99" value={runden} onChange={(event) => setRunden(Math.min(99, Math.max(0, Number(event.target.value) || 0)))} /></label>}
+            </section>
+          </div>
+
+          <aside className={`fangchance-ergebnis ${ergebnis ? 'fangchance-ergebnis--bereit' : ''}`}>
+            {!pokemonId ? <div className="fangchance-leer"><span>%</span><h2>Wähle zuerst ein Pokémon</h2><p>Danach erscheint hier sofort die berechnete Fangchance.</p></div> : laedt || !ergebnis ? <div className="fangchance-leer"><span className="fangchance-lader">◌</span><h2>Fangdaten werden geladen</h2></div> : <>
+              <span className="fangchance-ergebnis__label">CHANCE PRO BALL</span>
+              <div className="fangchance-ring" style={{ '--fangchance': `${Math.min(ergebnis.chance, 100) * 3.6}deg` } as CSSProperties}><div><strong>{ergebnis.chance >= 99.95 ? '100' : ergebnis.chance.toFixed(ergebnis.chance < 10 ? 1 : 0).replace('.', ',')}</strong><span>%</span></div></div>
+              <h2>{ergebnis.bewertung}</h2>
+              <p>{ergebnis.chance >= 100 ? 'Dieser Fang ist garantiert.' : `Im Durchschnitt etwa 1 Fang in ${Math.max(1, Math.round(100 / ergebnis.chance))} Bällen.`}</p>
+              <dl>
+                <div><dt>Ballbonus</dt><dd>×{ergebnis.ballBonus.toFixed(ergebnis.ballBonus % 1 ? 1 : 0).replace('.', ',')}</dd></div>
+                <div><dt>Statusbonus</dt><dd>×{String(ergebnis.statusBonus).replace('.', ',')}</dd></div>
+                <div><dt>Interner Fangwert</dt><dd>{ergebnis.fangwert} / 255</dd></div>
+              </dl>
+              <aside>{ergebnis.ballHinweis}</aside>
+              <small>Die Anzeige gilt für einen einzelnen Ball. Zufall kann trotzdem zu früheren oder späteren Fängen führen.</small>
+            </>}
+          </aside>
+        </div>
+        <p className="fangchance-formelhinweis"><strong>Gut zu wissen:</strong> Der Rechner nutzt die Fangmechanik der dritten Generation. Die Safari-Zone verwendet eine eigene Mechanik und ist hier nicht enthalten.</p>
+      </section>
+    </main>
+  )
+}
+
+type ItemShopKategorie = 'alle' | 'baelle' | 'heilung' | 'kampf' | 'training' | 'entwicklung' | 'getragen' | 'beeren' | 'tm' | 'vm' | 'reisen' | 'fundstuecke' | 'sonstiges'
+
+const ITEMSHOP_KATEGORIEN: { id: ItemShopKategorie; name: string; symbol: string }[] = [
+  { id: 'alle', name: 'Alle Items', symbol: '◇' },
+  { id: 'baelle', name: 'Pokébälle', symbol: '◉' },
+  { id: 'heilung', name: 'Heilung', symbol: '+' },
+  { id: 'kampf', name: 'Kampfitems', symbol: '⚔' },
+  { id: 'training', name: 'Training', symbol: '▲' },
+  { id: 'entwicklung', name: 'Entwicklung', symbol: '✦' },
+  { id: 'getragen', name: 'Getragene Items', symbol: '◆' },
+  { id: 'beeren', name: 'Beeren', symbol: '●' },
+  { id: 'tm', name: 'TM', symbol: 'TM' },
+  { id: 'vm', name: 'VM', symbol: 'VM' },
+  { id: 'reisen', name: 'Reiseitems', symbol: '↗' },
+  { id: 'fundstuecke', name: 'Fundstücke', symbol: '★' },
+  { id: 'sonstiges', name: 'Sonstiges', symbol: '…' },
+]
+
+const TM_ATTACKEN_IDS = [264, 337, 352, 347, 46, 92, 258, 339, 331, 237, 241, 269, 58, 59, 63, 113, 182, 240, 202, 219, 218, 76, 231, 85, 87, 89, 216, 91, 94, 247, 280, 104, 115, 351, 53, 188, 201, 126, 317, 332, 259, 263, 290, 156, 213, 168, 211, 285, 289, 315]
+const VM_ATTACKEN_IDS = [15, 19, 57, 70, 148, 249, 127, 291]
+const TM_ATTACKEN_TYPEN = ['fighting', 'dragon', 'water', 'psychic', 'normal', 'poison', 'ice', 'fighting', 'grass', 'normal', 'fire', 'dark', 'ice', 'ice', 'normal', 'psychic', 'normal', 'water', 'grass', 'normal', 'normal', 'grass', 'steel', 'electric', 'electric', 'ground', 'normal', 'ground', 'psychic', 'ghost', 'fighting', 'normal', 'psychic', 'electric', 'fire', 'poison', 'rock', 'fire', 'rock', 'flying', 'dark', 'normal', 'normal', 'psychic', 'normal', 'dark', 'steel', 'psychic', 'dark', 'fire']
+const VM_ATTACKEN_TYPEN = ['normal', 'flying', 'water', 'normal', 'normal', 'fighting', 'water', 'water']
+
+function maschinenTypFuerIdentifier(identifier: string) {
+  const tmTreffer = identifier.match(/^tm(\d{2})$/)
+  const vmTreffer = identifier.match(/^hm(\d{2})$/)
+  if (tmTreffer) return TM_ATTACKEN_TYPEN[Number(tmTreffer[1]) - 1] ?? null
+  if (vmTreffer) return VM_ATTACKEN_TYPEN[Number(vmTreffer[1]) - 1] ?? null
+  return null
+}
+
+function maschinenAttacke(item: (typeof ITEMS)[number]) {
+  const tmTreffer = item.identifier.match(/^tm(\d{2})$/)
+  const vmTreffer = item.identifier.match(/^hm(\d{2})$/)
+  const attackenId = tmTreffer
+    ? TM_ATTACKEN_IDS[Number(tmTreffer[1]) - 1]
+    : vmTreffer ? VM_ATTACKEN_IDS[Number(vmTreffer[1]) - 1] : undefined
+  return attackenId ? ATTACKEN.find((attacke) => attacke.id === attackenId) ?? null : null
+}
+
+function itemShopKategorie(item: (typeof ITEMS)[number]): ItemShopKategorie {
+  if (/^tm\d{2}$/.test(item.identifier)) return 'tm'
+  if (/^hm\d{2}$/.test(item.identifier)) return 'vm'
+  if ([33, 34].includes(item.kategorie)) return 'baelle'
+  if ([27, 28, 29, 30].includes(item.kategorie)) return 'heilung'
+  if (item.kategorie === 1) return 'kampf'
+  if (item.kategorie === 26) return 'training'
+  if ([10, 35].includes(item.kategorie)) return 'entwicklung'
+  if ([12, 13, 14, 16, 18, 19].includes(item.kategorie)) return 'getragen'
+  if ([2, 3, 4, 5, 6, 7, 8].includes(item.kategorie)) return 'beeren'
+  if (item.kategorie === 11) return 'reisen'
+  if ([9, 24, 25, 36, 38].includes(item.kategorie)) return 'fundstuecke'
+  return 'sonstiges'
+}
+
+function ItemShop({ navigation }: { navigation: ReactNode }) {
+  const [kategorie, setKategorie] = useState<ItemShopKategorie>('alle')
+  const [suche, setSuche] = useState('')
+  const [anzahl, setAnzahl] = useState(36)
+  const [ausgewaehlt, setAusgewaehlt] = useState<(typeof ITEMS)[number] | null>(null)
+  const [itemInfo, setItemInfo] = useState<{ beschreibung: string; apiKategorie: string; attacke: MoveApi | null } | null>(null)
+  const [infoLaedt, setInfoLaedt] = useState(false)
+  const [infoFehler, setInfoFehler] = useState('')
+
+  const kategorienZaehler = useMemo(() => {
+    const zaehler = new Map<ItemShopKategorie, number>()
+    ITEMSHOP_KATEGORIEN.forEach((eintrag) => zaehler.set(eintrag.id, 0))
+    ITEMS.forEach((item) => {
+      const gruppe = itemShopKategorie(item)
+      zaehler.set(gruppe, (zaehler.get(gruppe) ?? 0) + 1)
+    })
+    zaehler.set('alle', ITEMS.length)
+    return zaehler
+  }, [])
+
+  const gefiltert = useMemo(() => {
+    const begriff = suchText(suche.trim())
+    return ITEMS.filter((item) => {
+      if (kategorie !== 'alle' && itemShopKategorie(item) !== kategorie) return false
+      if (!begriff) return true
+      const attacke = maschinenAttacke(item)
+      return suchText(`${item.name} ${item.identifier} ${attacke?.name ?? ''}`).includes(begriff)
+    })
+  }, [kategorie, suche])
+
+  useEffect(() => { setAnzahl(36) }, [kategorie, suche])
+
+  useEffect(() => {
+    if (!ausgewaehlt) return
+    function schliessen(event: KeyboardEvent) {
+      if (event.key === 'Escape') setAusgewaehlt(null)
+    }
+    window.addEventListener('keydown', schliessen)
+    return () => window.removeEventListener('keydown', schliessen)
+  }, [ausgewaehlt])
+
+  useEffect(() => {
+    let aktiv = true
+    if (!ausgewaehlt) {
+      setItemInfo(null)
+      setInfoFehler('')
+      return () => { aktiv = false }
+    }
+    setInfoLaedt(true)
+    setInfoFehler('')
+    const maschine = maschinenAttacke(ausgewaehlt)
+    Promise.all([
+      laden<ItemApi>(`${API}/item/${ausgewaehlt.id}`),
+      maschine ? laden<MoveApi>(`${API}/move/${maschine.id}`) : Promise.resolve(null),
+    ]).then(([item, attacke]) => {
+      if (!aktiv) return
+      const feuerrotText = item.flavor_text_entries.find((eintrag) => eintrag.language.name === 'de' && eintrag.version_group.name === 'firered-leafgreen')
+      const deutscherText = feuerrotText ?? [...item.flavor_text_entries].reverse().find((eintrag) => eintrag.language.name === 'de')
+      const deutscherEffekt = item.effect_entries.find((eintrag) => eintrag.language.name === 'de')
+      const beschreibung = (deutscherEffekt?.short_effect ?? deutscherText?.text ?? 'Für dieses Item ist keine deutsche Beschreibung hinterlegt.').replace(/[\n\f]+/g, ' ').replace(/\s+/g, ' ').trim()
+      setItemInfo({ beschreibung, apiKategorie: item.category.name, attacke })
+    }).catch(() => {
+      if (aktiv) setInfoFehler('Die Item-Details konnten nicht geladen werden.')
+    }).finally(() => {
+      if (aktiv) setInfoLaedt(false)
+    })
+    return () => { aktiv = false }
+  }, [ausgewaehlt])
+
+  const aktiveKategorie = ITEMSHOP_KATEGORIEN.find((eintrag) => eintrag.id === kategorie) ?? ITEMSHOP_KATEGORIEN[0]
+
+  return (
+    <main className="itemshop-seite">
+      <header className="itemshop-kopf">
+        <span className="edition">FEUERROT · ITEM-SHOP</span>
+        <h1>Alles für dein Abenteuer.</h1>
+        <p>Durchsuche Items, Pokébälle, Beeren sowie alle TM und VM der dritten Generation – ordentlich nach Kategorien sortiert.</p>
+        <div><strong>{ITEMS.length}</strong><span>Items in der Datenbank</span></div>
+      </header>
+      {navigation}
+
+      <section className="itemshop-inhalt">
+        <div className="itemshop-suche">
+          <span aria-hidden="true">⌕</span>
+          <input type="search" value={suche} onChange={(event) => setSuche(event.target.value)} placeholder="Item, TM oder Attacke suchen …" aria-label="Items durchsuchen" />
+          {suche && <button onClick={() => setSuche('')} aria-label="Suche leeren">×</button>}
+        </div>
+
+        <div className="itemshop-kategorien" aria-label="Item-Kategorien">
+          {ITEMSHOP_KATEGORIEN.map((eintrag) => <button className={kategorie === eintrag.id ? 'aktiv' : ''} key={eintrag.id} onClick={() => setKategorie(eintrag.id)}><i>{eintrag.symbol}</i><span>{eintrag.name}</span><small>{kategorienZaehler.get(eintrag.id) ?? 0}</small></button>)}
+        </div>
+
+        <header className="itemshop-ergebnis-kopf"><div><span>{aktiveKategorie.symbol}</span><div><small>KATEGORIE</small><h2>{aktiveKategorie.name}</h2></div></div><p><strong>{gefiltert.length}</strong> Treffer</p></header>
+
+        {gefiltert.length ? <>
+          <div className="itemshop-raster">
+            {gefiltert.slice(0, anzahl).map((item) => {
+              const attacke = maschinenAttacke(item)
+              const gruppe = ITEMSHOP_KATEGORIEN.find((eintrag) => eintrag.id === itemShopKategorie(item))
+              return <button key={item.id} onClick={() => setAusgewaehlt(item)}><span className="itemshop-bild"><img src={ITEM_BILD(item.identifier)} alt="" loading="lazy" /></span><span className="itemshop-karte__text"><small>{gruppe?.name}</small><strong>{item.name}</strong>{attacke && <em>{attacke.name}</em>}</span><b>›</b></button>
+            })}
+          </div>
+          {anzahl < gefiltert.length && <button className="itemshop-mehr" onClick={() => setAnzahl((aktuell) => aktuell + 36)}>Weitere Items anzeigen <span>{Math.min(36, gefiltert.length - anzahl)}</span></button>}
+        </> : <div className="itemshop-leer"><span>⌕</span><h2>Kein Item gefunden</h2><p>Versuche einen anderen Namen oder wechsle die Kategorie.</p></div>}
+      </section>
+
+      {ausgewaehlt && <div className="itemshop-dialog-hintergrund" onMouseDown={() => setAusgewaehlt(null)}><section className="itemshop-dialog" role="dialog" aria-modal="true" aria-labelledby="itemshop-dialog-titel" onMouseDown={(event) => event.stopPropagation()}>
+        <button className="itemshop-dialog__schliessen" onClick={() => setAusgewaehlt(null)} aria-label="Item-Details schließen">×</button>
+        <div className="itemshop-dialog__bild"><span>{ITEMSHOP_KATEGORIEN.find((eintrag) => eintrag.id === itemShopKategorie(ausgewaehlt))?.name}</span><img src={ITEM_BILD(ausgewaehlt.identifier)} alt={ausgewaehlt.name} /></div>
+        <div className="itemshop-dialog__info"><small>ITEM #{String(ausgewaehlt.id).padStart(3, '0')}</small><h2 id="itemshop-dialog-titel">{ausgewaehlt.name}</h2>
+          {infoLaedt ? <p className="itemshop-dialog__laden">Details werden geladen …</p> : infoFehler ? <p className="itemshop-dialog__fehler">{infoFehler}</p> : itemInfo && <><p>{itemInfo.beschreibung}</p>{itemInfo.attacke && <section className="itemshop-attacke"><header><span>ENTHALTENE ATTACKE</span><h3>{maschinenAttacke(ausgewaehlt)?.name}</h3></header><div><TypMarke typ={itemInfo.attacke.type.name} /><dl><div><dt>Stärke</dt><dd>{itemInfo.attacke.power ?? '—'}</dd></div><div><dt>Genauigkeit</dt><dd>{itemInfo.attacke.accuracy === null ? '—' : `${itemInfo.attacke.accuracy} %`}</dd></div><div><dt>AP</dt><dd>{itemInfo.attacke.pp ?? '—'}</dd></div></dl></div><p>{attackenWirkung(itemInfo.attacke)}</p></section>}</>}
+          {ausgewaehlt.identifier === 'hm08' && <aside><strong>Hinweis für Feuerrot:</strong> VM08 · Taucher gehört zu den Hoenn-Spielen und ist in Feuerrot regulär nicht erhältlich.</aside>}
+        </div>
+      </section></div>}
+    </main>
+  )
+}
+
+function Regeln({ navigation }: { navigation: ReactNode }) {
   function zuRegel(index: number) {
     document.getElementById(`regel-${index + 1}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -2646,7 +3330,6 @@ function Regeln({ zurueck }: { zurueck: () => void }) {
   return (
     <main className="regeln-seite">
       <header className="regeln-kopf">
-        <button className="zurueck" onClick={zurueck}>← Startseite</button>
         <span className="edition">SOULLINK · RANDOMIZER · REGELWERK</span>
         <h1>Gemeinsam verbunden.<br />Gemeinsam überleben.</h1>
         <p>16 Regeln für eure Feuerrot-SoulLink-Challenge – von der ersten Begegnung bis zum Champ.</p>
@@ -2656,6 +3339,7 @@ function Regeln({ zurueck }: { zurueck: () => void }) {
           <div><strong>∞</strong><span>Teamgeist</span></div>
         </div>
       </header>
+      {navigation}
 
       <section className="regeln-inhalt">
         <nav className="regeln-sprungmarken" aria-label="Direkt zu einer Regel">
@@ -2688,7 +3372,7 @@ function Regeln({ zurueck }: { zurueck: () => void }) {
   )
 }
 
-function Pokedex({ zurueck }: { zurueck: () => void }) {
+function Pokedex({ navigation }: { navigation: ReactNode }) {
   const [suche, setSuche] = useState('')
   const [ausgewaehlt, setAusgewaehlt] = useState<number | null>(null)
   const [umfang, setUmfang] = useState<'kanto' | 'national'>('national')
@@ -2708,11 +3392,11 @@ function Pokedex({ zurueck }: { zurueck: () => void }) {
   return (
     <main className="pokedex-seite">
       <header className="pokedex-kopf">
-        <button className="zurueck" onClick={zurueck}>← Startseite</button>
         <span className="edition">{umfang === 'kanto' ? 'KANTO-POKÉDEX · 001–151' : 'NATIONALER POKÉDEX · 001–386'}</span>
         <h1>Pokédex</h1>
         <p>{umfang === 'kanto' ? 'Die ursprünglichen 151 Pokémon aus Kanto.' : 'Alle Pokémon der ersten drei Generationen – mit Daten aus Feuerrot und Blattgrün.'}</p>
       </header>
+      {navigation}
 
       <section className="pokedex-inhalt">
         <div className="pokedex-umfang" role="group" aria-label="Pokédex auswählen"><button className={umfang === 'kanto' ? 'aktiv' : ''} onClick={() => setUmfang('kanto')}><span>151</span><strong>Kanto-Pokédex</strong><small>Generation I</small></button><button className={umfang === 'national' ? 'aktiv' : ''} onClick={() => setUmfang('national')}><span>386</span><strong>Nationaler Pokédex</strong><small>Generation I–III</small></button></div>
@@ -2748,7 +3432,7 @@ function Pokedex({ zurueck }: { zurueck: () => void }) {
         )}
       </section>
 
-      {ausgewaehlt && <DetailFenster id={ausgewaehlt} schliessen={() => setAusgewaehlt(null)} />}
+      {ausgewaehlt && <DetailFenster id={ausgewaehlt} schliessen={() => setAusgewaehlt(null)} pokemonOeffnen={setAusgewaehlt} />}
     </main>
   )
 }
@@ -3025,15 +3709,18 @@ function EinstellungsMenue({
   )
 }
 
-type Seite = 'start' | 'pokedex' | 'teamplaner' | 'kampfberater' | 'regeln' | 'begegnungen' | 'begegnungstracker' | 'capwaechter'
+type Seite = 'start' | 'pokedex' | 'teamplaner' | 'kampfberater' | 'fangchance' | 'itemshop' | 'regeln' | 'begegnungen' | 'begegnungstracker' | 'capwaechter'
 
 const DIREKTE_BEREICHE: { seite: Seite; symbol: string; name: string }[] = [
+  { seite: 'start', symbol: '⌂', name: 'Startseite' },
   { seite: 'pokedex', symbol: '◉', name: 'Pokédex' },
   { seite: 'teamplaner', symbol: '↔', name: 'Teamplaner' },
   { seite: 'kampfberater', symbol: '⚔', name: 'Kampfberater' },
   { seite: 'begegnungstracker', symbol: '⌖', name: 'Encounter' },
-  { seite: 'regeln', symbol: '§', name: 'Regeln' },
+  { seite: 'fangchance', symbol: '%', name: 'Fangchance' },
   { seite: 'begegnungen', symbol: '✓', name: 'Abenteuerplan' },
+  { seite: 'regeln', symbol: '§', name: 'Regeln' },
+  { seite: 'itemshop', symbol: '₽', name: 'Item-Shop' },
 ]
 
 function BereichNavigation({ aktiv, wechseln }: { aktiv: Seite; wechseln: (seite: Seite) => void }) {
@@ -3061,6 +3748,8 @@ export default function App() {
     if (window.location.hash === '#pokedex') return 'pokedex'
     if (window.location.hash === '#teamplaner') return 'teamplaner'
     if (window.location.hash === '#kampfberater') return 'kampfberater'
+    if (window.location.hash === '#fangchance') return 'fangchance'
+    if (window.location.hash === '#itemshop') return 'itemshop'
     if (window.location.hash === '#regeln') return 'regeln'
     if (window.location.hash === '#begegnungen') return 'begegnungen'
     if (window.location.hash === '#begegnungstracker') return 'begegnungstracker'
@@ -3129,8 +3818,6 @@ export default function App() {
         </div>
         <span className="datenhinweis">Daten: PokéAPI · Fanprojekt</span>
       </nav>}
-      {seite !== 'start' && <BereichNavigation aktiv={seite} wechseln={wechseln} />}
-
       <EinstellungsMenue offen={menueOffen} schliessen={() => setMenueOffen(false)} design={design} designAendern={setDesign} />
       {ballAuswahlOffen && <div className="ball-dialog-hintergrund" onMouseDown={() => setBallAuswahlOffen(false)}><section className="ball-dialog" role="dialog" aria-modal="true" aria-labelledby="ball-dialog-titel" onMouseDown={(event) => event.stopPropagation()}><header><div><span>LOGO AUSWÄHLEN</span><h2 id="ball-dialog-titel">Dein Pokéball</h2></div><button onClick={() => setBallAuswahlOffen(false)} aria-label="Auswahl schließen">×</button></header><div>{([{ id: 'poke', name: 'Pokéball' }, { id: 'super', name: 'Superball' }, { id: 'hyper', name: 'Hyperball' }, { id: 'meister', name: 'Meisterball' }, { id: 'premier', name: 'Premierball' }] as { id: BallLogo; name: string }[]).map((ball) => <button className={design.ball === ball.id ? 'aktiv' : ''} data-vorschau-ball={ball.id} key={ball.id} onClick={() => { setDesign({ ...design, ball: ball.id }); setBallAuswahlOffen(false) }}><span className="ball-vorschau"><i /></span><strong>{ball.name}</strong></button>)}</div></section></div>}
 
@@ -3142,19 +3829,23 @@ export default function App() {
           pokedexOeffnen={() => wechseln('pokedex')}
           teamplanerOeffnen={() => wechseln('teamplaner')}
           kampfberaterOeffnen={() => wechseln('kampfberater')}
+          fangchanceOeffnen={() => wechseln('fangchance')}
           regelnOeffnen={() => wechseln('regeln')}
           encounterOeffnen={() => wechseln('begegnungstracker')}
           abenteuerplanOeffnen={() => wechseln('begegnungen')}
+          itemshopOeffnen={() => wechseln('itemshop')}
           challengeZuruecksetzen={challengeZuruecksetzen}
         />
       )}
-      {seite === 'pokedex' && <Pokedex zurueck={() => wechseln('start')} />}
-      {seite === 'teamplaner' && <Teamplaner zurueck={() => wechseln('start')} />}
-      {seite === 'kampfberater' && <Kampfberater zurueck={() => wechseln('start')} teamplanerOeffnen={() => wechseln('teamplaner')} />}
-      {seite === 'regeln' && <Regeln zurueck={() => wechseln('start')} />}
-      {seite === 'begegnungen' && <AbenteuerPlan zurueck={() => wechseln('start')} />}
-      {seite === 'begegnungstracker' && <BegegnungsTracker zurueck={() => wechseln('start')} />}
-      {seite === 'capwaechter' && <CapWaechter zurueck={() => wechseln('start')} teamplanerOeffnen={() => wechseln('teamplaner')} />}
+      {seite === 'pokedex' && <Pokedex navigation={<BereichNavigation aktiv={seite} wechseln={wechseln} />} />}
+      {seite === 'teamplaner' && <Teamplaner navigation={<BereichNavigation aktiv={seite} wechseln={wechseln} />} />}
+      {seite === 'kampfberater' && <Kampfberater teamplanerOeffnen={() => wechseln('teamplaner')} navigation={<BereichNavigation aktiv={seite} wechseln={wechseln} />} />}
+      {seite === 'fangchance' && <FangchanceRechner navigation={<BereichNavigation aktiv={seite} wechseln={wechseln} />} />}
+      {seite === 'itemshop' && <ItemShop navigation={<BereichNavigation aktiv={seite} wechseln={wechseln} />} />}
+      {seite === 'regeln' && <Regeln navigation={<BereichNavigation aktiv={seite} wechseln={wechseln} />} />}
+      {seite === 'begegnungen' && <AbenteuerPlan navigation={<BereichNavigation aktiv={seite} wechseln={wechseln} />} />}
+      {seite === 'begegnungstracker' && <BegegnungsTracker navigation={<BereichNavigation aktiv={seite} wechseln={wechseln} />} />}
+      {seite === 'capwaechter' && <CapWaechter zurueck={() => wechseln('start')} teamplanerOeffnen={() => wechseln('teamplaner')} navigation={<BereichNavigation aktiv={seite} wechseln={wechseln} />} />}
 
       <footer>
         <p>Inoffizielles, nicht kommerzielles Fanprojekt. Pokémon und zugehörige Namen sind Marken ihrer jeweiligen Rechteinhaber.</p>
