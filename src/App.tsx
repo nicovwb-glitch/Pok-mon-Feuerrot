@@ -452,17 +452,27 @@ function LigaSymbol({ index }: { index: number }) {
 }
 
 function Startseite({
+  menueOeffnen,
+  menueOffen,
+  logoAuswahlOeffnen,
   pokedexOeffnen,
   teamplanerOeffnen,
   kampfberaterOeffnen,
   regelnOeffnen,
+  encounterOeffnen,
   abenteuerplanOeffnen,
+  challengeZuruecksetzen,
 }: {
+  menueOeffnen: () => void
+  menueOffen: boolean
+  logoAuswahlOeffnen: () => void
   pokedexOeffnen: () => void
   teamplanerOeffnen: () => void
   kampfberaterOeffnen: () => void
   regelnOeffnen: () => void
+  encounterOeffnen: () => void
   abenteuerplanOeffnen: () => void
+  challengeZuruecksetzen: () => void
 }) {
   const [fortschritt, setFortschritt] = useState<number | null>(() => {
     const gespeichert = localStorage.getItem('feuerrot-arenen-fortschritt')
@@ -470,11 +480,14 @@ function Startseite({
     const wert = Number(gespeichert)
     return Number.isInteger(wert) && wert >= 0 && wert < ARENEN_FORTSCHRITT.length ? wert : null
   })
+  const [notizenOffen, setNotizenOffen] = useState(false)
+  const [notizen, setNotizen] = useState(() => localStorage.getItem('feuerrot-notizen') ?? '')
 
   useEffect(() => {
     if (fortschritt === null) localStorage.removeItem('feuerrot-arenen-fortschritt')
     else localStorage.setItem('feuerrot-arenen-fortschritt', String(fortschritt))
   }, [fortschritt])
+  useEffect(() => { localStorage.setItem('feuerrot-notizen', notizen) }, [notizen])
 
   const aktuellerAbschnitt = fortschritt === null ? null : ARENEN_FORTSCHRITT[fortschritt]
   const ligaFortschritt = fortschritt === null ? 0 : Math.max(0, fortschritt - 7)
@@ -500,9 +513,9 @@ function Startseite({
       aktiv: true,
       aktion: kampfberaterOeffnen,
     },
-    { titel: 'Abenteuerplan', text: 'Schritt für Schritt von Arena zu Arena', symbol: '⌖', aktiv: true, aktion: abenteuerplanOeffnen },
+    { titel: 'Encounter-Liste', text: 'Fanggebiete in Spielreihenfolge mit Leveln', symbol: '✓', aktiv: true, aktion: encounterOeffnen },
     { titel: 'Regeln', text: 'Das vollständige SoulLink-Regelwerk', symbol: '§', aktiv: true, aktion: regelnOeffnen },
-    { titel: 'Weiteres Werkzeug', text: 'Dieser Bereich wird später gemeinsam geplant', symbol: '…' },
+    { titel: 'Abenteuerplan', text: 'Schritt für Schritt von Arena zu Arena', symbol: '⌖', aktiv: true, aktion: abenteuerplanOeffnen },
   ]
 
   return (
@@ -511,25 +524,29 @@ function Startseite({
         <div className="held__inhalt">
           <span className="edition">GENERATION III · FEUERROT</span>
           <h1>Dein Begleiter für Kanto</h1>
-          <p>
-            Plane dein Abenteuer, durchsuche den Nationalen Pokédex und behalte deinen
-            Fortschritt an einem Ort.
-          </p>
         </div>
+        <p className="held__fussnote">Plane dein Abenteuer, durchsuche den Nationalen Pokédex und behalte deinen Fortschritt an einem Ort.</p>
         <div className="held__ball" aria-hidden="true">
           <span />
         </div>
       </section>
 
-      <section className="bereich-auswahl" aria-labelledby="bereiche-titel">
-        <div className="abschnitt-kopf">
-          <div>
-            <span className="ueberzeile">ABENTEUER-WERKZEUGE</span>
-            <h2 id="bereiche-titel">Wähle einen Bereich</h2>
-          </div>
-          <span className="status"><i /> 5 von 6 verfügbar</span>
+      <nav className="start-werkzeugleiste" aria-label="Hauptnavigation">
+        <div className="hauptnav__links">
+          <button className="menue-knopf" onClick={menueOeffnen} aria-label="Einstellungen öffnen" aria-expanded={menueOffen}>
+            <i /><i /><i />
+          </button>
+          <button className="marke" onClick={() => window.location.hash = ''} aria-label="Zur Startseite">
+            <span className="marke__ball" role="button" tabIndex={0} onClick={(event) => { event.stopPropagation(); logoAuswahlOeffnen() }}><i /></span>
+            <span><strong>Feuerrot</strong><small>Abenteuer-Begleiter</small></span>
+          </button>
+          <span className="werkzeugleiste__trenner" aria-hidden="true" />
+          <span className="ueberzeile">ABENTEUER-WERKZEUGE</span>
         </div>
+        <span className="status"><i /> 6 von 6 verfügbar</span>
+      </nav>
 
+      <section className="bereich-auswahl" aria-label="Abenteuer-Werkzeuge">
         <section className="arenen-fortschritt" aria-label="Arenen-Fortschritt und Level-Caps">
           <div className="orden-reihe">
             {ORDEN_NAMEN.map((name, index) => {
@@ -553,7 +570,7 @@ function Startseite({
               )
             })}
           </div>
-          <div className="arena-auswahl">
+          <div className="arena-steuerung"><div className="arena-auswahl">
             <label htmlFor="arena-fortschritt">Aktueller Abschnitt</label>
             <div>
               <select
@@ -566,7 +583,7 @@ function Startseite({
               </select>
               <span className="level-cap"><small>LEVEL-CAP</small><strong>{aktuellerAbschnitt?.cap ?? '— / —'}</strong></span>
             </div>
-          </div>
+          </div><button className="notizbuch-knopf" onClick={() => setNotizenOffen(true)}><span>▤</span><strong>Notizbuch</strong><small>{notizen.trim() ? 'Notizen vorhanden' : 'Bemerkungen festhalten'}</small></button></div>
           <p>{aktuellerAbschnitt ? `${aktuellerAbschnitt.name} · ${aktuellerAbschnitt.orden} von 8 Orden · ${ligaFortschritt} von 5 Liga-Symbolen` : 'Wähle deinen aktuellen Fortschritt. Noch sind alle Orden und Liga-Symbole grau.'}</p>
         </section>
 
@@ -587,6 +604,8 @@ function Startseite({
           ))}
         </div>
       </section>
+      <button className="challenge-reset" onClick={challengeZuruecksetzen}><span>↻</span><strong>Challenge zurücksetzen</strong><small>Aktuellen Run vorher archivieren</small></button>
+      {notizenOffen && <div className="notiz-dialog-hintergrund" onMouseDown={() => setNotizenOffen(false)}><section className="notiz-dialog" role="dialog" aria-modal="true" aria-labelledby="notiz-dialog-titel" onMouseDown={(event) => event.stopPropagation()}><header><div><span>SOULLINK-NOTIZBUCH</span><h2 id="notiz-dialog-titel">Bemerkungen</h2></div><button onClick={() => setNotizenOffen(false)} aria-label="Notizbuch schließen">×</button></header><textarea value={notizen} onChange={(event) => setNotizen(event.target.value)} placeholder="Schreibe hier Routenhinweise, Randomizer-Funde oder Absprachen mit deinen Partnern …" autoFocus /><footer><span>Wird automatisch gespeichert</span><button onClick={() => setNotizenOffen(false)}>Fertig</button></footer></section></div>}
     </main>
   )
 }
@@ -787,6 +806,8 @@ type PokemonPaar = {
   attackenLinks: number[]
   attackenRechts: number[]
 }
+
+type GrabPaar = PokemonPaar & { gestorbenAm: string }
 
 function PokemonSuche({
   titel,
@@ -1077,6 +1098,7 @@ function PaarZeile({
   onOeffnen,
   onEntfernen,
   onBank,
+  onGrabbox,
   onSlotWechseln,
   onLevelAendern,
   onItemAendern,
@@ -1088,6 +1110,7 @@ function PaarZeile({
   onOeffnen: (paarId: string, pokemonId: number) => void
   onEntfernen: (id: string) => void
   onBank: (id: string) => void
+  onGrabbox: (id: string) => void
   onSlotWechseln: (id: string, slot: number) => void
   onLevelAendern: (id: string, seite: 'links' | 'rechts', level: number) => void
   onItemAendern: (id: string, seite: 'links' | 'rechts', itemId: number | null) => void
@@ -1124,6 +1147,7 @@ function PaarZeile({
         <TeamPokemon id={paar.rechts} level={paar.levelRechts} itemId={paar.itemRechts} seite="blau" aktiv={offeneId === paar.rechts} onOeffnen={() => onOeffnen(paar.id, paar.rechts)} onLevelAendern={(level) => onLevelAendern(paar.id, 'rechts', level)} onItemAendern={(itemId) => onItemAendern(paar.id, 'rechts', itemId)} />
         <button className="paar-entfernen" onClick={() => onEntfernen(paar.id)} aria-label="Paar entfernen">×</button>
         <button className="paar-auf-bank" onClick={() => onBank(paar.id)}>↓ Auf Bank</button>
+        <button className="paar-in-grabbox" onClick={() => onGrabbox(paar.id)}>† Grabbox</button>
       </div>
       {offeneId && (
         <TeamKurzinfo
@@ -1162,6 +1186,14 @@ function Teamplaner({ zurueck }: { zurueck: () => void }) {
   const [rechts, setRechts] = useState<number | null>(null)
   const [offen, setOffen] = useState<{ paarId: string; pokemonId: number } | null>(null)
   const [tauschZiele, setTauschZiele] = useState<Record<string, number>>({})
+  const [grabbox, setGrabbox] = useState<GrabPaar[]>(() => {
+    try { return JSON.parse(localStorage.getItem('feuerrot-grabbox') ?? '[]') as GrabPaar[] }
+    catch { return [] }
+  })
+  const [deathCounter, setDeathCounter] = useState<{ rot: number; blau: number }>(() => {
+    try { return JSON.parse(localStorage.getItem('feuerrot-death-counter') ?? '{"rot":0,"blau":0}') as { rot: number; blau: number } }
+    catch { return { rot: 0, blau: 0 } }
+  })
   const [teamNamen, setTeamNamen] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('feuerrot-teamplaner-namen') ?? '{"rot":"Team Rot","blau":"Team Blau"}') as { rot: string; blau: string }
@@ -1178,8 +1210,11 @@ function Teamplaner({ zurueck }: { zurueck: () => void }) {
     localStorage.setItem('feuerrot-teamplaner-namen', JSON.stringify(teamNamen))
   }, [teamNamen])
 
-  const teamRot = paare.map((paar) => paar.links)
-  const teamBlau = paare.map((paar) => paar.rechts)
+  useEffect(() => { localStorage.setItem('feuerrot-grabbox', JSON.stringify(grabbox)) }, [grabbox])
+  useEffect(() => { localStorage.setItem('feuerrot-death-counter', JSON.stringify(deathCounter)) }, [deathCounter])
+
+  const teamRot = [...paare, ...grabbox].map((paar) => paar.links)
+  const teamBlau = [...paare, ...grabbox].map((paar) => paar.rechts)
   const aktivePaare = paare.filter((paar) => paar.aktiv).sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0))
   const weiterePaare = paare.filter((paar) => !paar.aktiv)
   const freieSlots = Array.from({ length: 6 }, (_, index) => index).filter(
@@ -1187,7 +1222,7 @@ function Teamplaner({ zurueck }: { zurueck: () => void }) {
   )
   const nameRot = teamNamen.rot.trim() || 'Team Rot'
   const nameBlau = teamNamen.blau.trim() || 'Team Blau'
-  const hatAenderungen = paare.length > 0 || nameRot !== 'Team Rot' || nameBlau !== 'Team Blau'
+  const hatAenderungen = paare.length > 0 || grabbox.length > 0 || deathCounter.rot > 0 || deathCounter.blau > 0 || nameRot !== 'Team Rot' || nameBlau !== 'Team Blau'
 
   function paarHinzufuegen() {
     if (!links || !rechts) return
@@ -1225,6 +1260,22 @@ function Teamplaner({ zurueck }: { zurueck: () => void }) {
       paar.id === id ? { ...paar, aktiv: false, slot: null } : paar,
     ))
     if (offen?.paarId === id) setOffen(null)
+  }
+
+  function inGrabbox(id: string) {
+    const paar = paare.find((eintrag) => eintrag.id === id)
+    if (!paar) return
+    setGrabbox((aktuell) => [...aktuell, { ...paar, aktiv: false, slot: null, gestorbenAm: new Date().toISOString() }])
+    setPaare((aktuell) => aktuell.filter((eintrag) => eintrag.id !== id))
+    if (offen?.paarId === id) setOffen(null)
+  }
+
+  function wiederherstellen(id: string) {
+    const paar = grabbox.find((eintrag) => eintrag.id === id)
+    if (!paar) return
+    const { gestorbenAm: _gestorbenAm, ...lebendesPaar } = paar
+    setPaare((aktuell) => [...aktuell, { ...lebendesPaar, aktiv: false, slot: null }])
+    setGrabbox((aktuell) => aktuell.filter((eintrag) => eintrag.id !== id))
   }
 
   function einwechseln(id: string, zielSlot: number) {
@@ -1276,6 +1327,8 @@ function Teamplaner({ zurueck }: { zurueck: () => void }) {
       setOffen(null)
       setTauschZiele({})
       setTeamNamen({ rot: 'Team Rot', blau: 'Team Blau' })
+      setGrabbox([])
+      setDeathCounter({ rot: 0, blau: 0 })
     }
   }
 
@@ -1322,9 +1375,11 @@ function Teamplaner({ zurueck }: { zurueck: () => void }) {
               aria-label="Name des roten Teams"
             />
             <small>{aktivePaare.length} / 6</small>
+            <div className="death-counter death-counter--rot"><span>Tode</span><button onClick={() => setDeathCounter((aktuell) => ({ ...aktuell, rot: Math.max(0, aktuell.rot - 1) }))} aria-label="Death Counter Team Rot verringern">−</button><strong>{deathCounter.rot}</strong><button onClick={() => setDeathCounter((aktuell) => ({ ...aktuell, rot: aktuell.rot + 1 }))} aria-label="Death Counter Team Rot erhöhen">+</button></div>
           </div>
           <span>VERBUNDENE SLOTS</span>
           <div>
+            <div className="death-counter death-counter--blau"><span>Tode</span><button onClick={() => setDeathCounter((aktuell) => ({ ...aktuell, blau: Math.max(0, aktuell.blau - 1) }))} aria-label="Death Counter Team Blau verringern">−</button><strong>{deathCounter.blau}</strong><button onClick={() => setDeathCounter((aktuell) => ({ ...aktuell, blau: aktuell.blau + 1 }))} aria-label="Death Counter Team Blau erhöhen">+</button></div>
             <small>{aktivePaare.length} / 6</small>
             <input
               className="teamname teamname--blau"
@@ -1340,11 +1395,12 @@ function Teamplaner({ zurueck }: { zurueck: () => void }) {
 
         <div className="paar-liste">
           {hauptPaare.map((paar, index) => (
-            <PaarZeile key={paar?.id ?? `leer-${index}`} paar={paar} index={index} offen={offen} onOeffnen={kurzinfoOeffnen} onEntfernen={entfernen} onBank={aufBank} onSlotWechseln={slotWechseln} onLevelAendern={levelAendern} onItemAendern={itemAendern} onAttackenAendern={attackenAendern} />
+            <PaarZeile key={paar?.id ?? `leer-${index}`} paar={paar} index={index} offen={offen} onOeffnen={kurzinfoOeffnen} onEntfernen={entfernen} onBank={aufBank} onGrabbox={inGrabbox} onSlotWechseln={slotWechseln} onLevelAendern={levelAendern} onItemAendern={itemAendern} onAttackenAendern={attackenAendern} />
           ))}
         </div>
 
-        {weiterePaare.length > 0 && (
+        <div className="team-unterbereiche">
+        {weiterePaare.length > 0 ? (
           <section className="weitere-paare">
             <div><span className="ueberzeile">ERSATZBANK</span><h2>Weitere Pokémon-Paare</h2><p>Diese Paare liegen außerhalb der sechs Hauptplätze.</p></div>
             <div className="weitere-paare__raster">
@@ -1376,6 +1432,7 @@ function Teamplaner({ zurueck }: { zurueck: () => void }) {
                       </>
                     )}
                   </div>
+                  <button className="bank-grabbox" onClick={() => inGrabbox(paar.id)}>† In Grabbox verschieben</button>
                   {offen?.paarId === paar.id && (
                     <TeamKurzinfo
                       id={offen.pokemonId}
@@ -1388,7 +1445,12 @@ function Teamplaner({ zurueck }: { zurueck: () => void }) {
               ))}
             </div>
           </section>
-        )}
+        ) : <section className="weitere-paare weitere-paare--leer"><div><span className="ueberzeile">ERSATZBANK</span><h2>Weitere Pokémon-Paare</h2><p>Noch keine lebenden Ersatzpaare vorhanden.</p></div></section>}
+        <section className="grabbox">
+          <div className="grabbox__kopf"><div><span className="ueberzeile">GRABBOX</span><h2>Verstorbene Seelenpaare</h2><p>Beide Partner bleiben gemeinsam dokumentiert.</p></div><strong>{grabbox.length}</strong></div>
+          {grabbox.length ? <div className="grabbox__raster">{grabbox.map((paar) => <article className="grab-paar" key={paar.id}><div><img src={BILD(paar.links)} alt={POKEMON[paar.links - 1].name} /><span><small>{nameRot}</small><strong>{POKEMON[paar.links - 1].name}</strong><em>Lv. {paar.levelLinks}</em></span></div><b>†</b><div><span><small>{nameBlau}</small><strong>{POKEMON[paar.rechts - 1].name}</strong><em>Lv. {paar.levelRechts}</em></span><img src={BILD(paar.rechts)} alt={POKEMON[paar.rechts - 1].name} /></div><footer><span>Verstorben am {new Date(paar.gestorbenAm).toLocaleDateString('de-DE')}</span><button onClick={() => wiederherstellen(paar.id)}>Wiederherstellen</button></footer></article>)}</div> : <p className="grabbox__leer">Noch kein Seelenpaar liegt in der Grabbox.</p>}
+        </section>
+        </div>
       </section>
     </main>
   )
@@ -1746,7 +1808,7 @@ function Kampfberater({
               </div>
             </section>
 
-            <section className="berater-schritt">
+            <section className="berater-schritt berater-schritt--gegner">
               <div className="berater-schritt__titel"><span>02</span><div><small>AKTUELLER KAMPF</small><h2>Gegner festlegen</h2></div></div>
               <div className="gegner-eingabe">
                 <PokemonSuche titel="Gegnerisches Pokémon" farbe="rot" ausgewaehlt={gegnerId} gesperrt={[]} onAuswaehlen={(id) => { setGegnerId(id); setErgebnisse([]); setAttackenIds([]); setNachpruefung([]) }} />
@@ -1987,28 +2049,97 @@ const ABENTEUER_INFOS: Record<string, AbenteuerInfo> = {
   '12-4': { titel: 'Zum Champ', ort: 'Indigo-Plateau · Champ-Raum', x: 120, y: 120, beschreibung: 'Nach Siegfried wartet dein Rivale als amtierender Champ.', weg: ['Wende mögliche Verluste aus dem Siegfried-Kampf endgültig an.', 'Gehe durch die letzte Tür hinter Siegfried.', 'Bereite vor dem Ansprechen des Rivalen alle erlaubten Items und Start-Pokémon vor.', 'Besiege den Rivalen, um die Challenge abzuschließen.'] },
 }
 
-function KantoKarte({ info }: { info: AbenteuerInfo }) {
+function KantoKarte({ info, nurLeuchten = false, markerAnzeigen = true }: { info: AbenteuerInfo; nurLeuchten?: boolean; markerAnzeigen?: boolean }) {
   const orte = [
-    ['Indigo', 120, 120], ['Marmoria', 240, 210], ['Azuria', 410, 180], ['Prismania', 350, 255],
-    ['Saffronia', 440, 270], ['Lavandia', 545, 255], ['Vertania', 245, 355], ['Orania', 405, 350],
-    ['Fuchsania', 400, 420], ['Alabastia', 250, 420], ['Zinnober', 240, 455],
+    { name: 'Indigo', x: 120, y: 120, farbe: '#d8d8cf' },
+    { name: 'Marmoria', x: 240, y: 210, farbe: '#9ca7a5' },
+    { name: 'Azuria', x: 410, y: 180, farbe: '#68b6dc' },
+    { name: 'Prismania', x: 350, y: 255, farbe: '#78b75d' },
+    { name: 'Saffronia', x: 440, y: 270, farbe: '#e3bb48' },
+    { name: 'Lavandia', x: 545, y: 255, farbe: '#a47abb' },
+    { name: 'Vertania', x: 245, y: 355, farbe: '#70a96a' },
+    { name: 'Orania', x: 405, y: 350, farbe: '#df9e49' },
+    { name: 'Fuchsania', x: 400, y: 420, farbe: '#d783a8' },
+    { name: 'Alabastia', x: 250, y: 420, farbe: '#e8e3d5' },
+    { name: 'Zinnober', x: 240, y: 455, farbe: '#d75850' },
+  ] as const
+  const baeume = [
+    [205, 238], [218, 248], [229, 235], [216, 225], [255, 165], [270, 153], [286, 164],
+    [472, 178], [488, 185], [500, 198], [505, 318], [520, 326], [535, 337], [335, 383], [350, 392],
+  ] as const
+  const berge = [
+    [145, 165], [165, 150], [185, 160], [275, 125], [295, 135], [315, 126], [505, 145], [525, 155], [565, 185],
+  ] as const
+  const routenNummern = [
+    ['1', 247, 389], ['2', 240, 283], ['3', 280, 193], ['4', 365, 172], ['5', 425, 224], ['6', 423, 315],
+    ['7', 392, 258], ['8', 500, 261], ['9', 466, 177], ['10', 526, 210], ['11', 474, 348], ['12–15', 561, 343],
+    ['16–18', 330, 337], ['19', 397, 454], ['20', 315, 462], ['21', 247, 443], ['22', 205, 348], ['23', 145, 245],
+    ['24–25', 438, 127],
   ] as const
   return (
     <div className="kanto-karte">
-      <svg viewBox="0 0 700 500" role="img" aria-label={`Kanto-Karte mit markiertem Ort: ${info.ort}`}>
-        <defs><filter id="karten-schatten"><feDropShadow dx="0" dy="5" stdDeviation="5" floodOpacity=".18" /></filter></defs>
-        <rect width="700" height="500" rx="16" fill="#badde1" />
-        <path d="M85 72h105l25 48 72 12 31 35 95-28 57 34 115 4 44 64-40 60-78 22-22 74-67 58-91-10-59 35-100-19-51-70-38-91 42-65-32-68Z" fill="#dce7bd" stroke="#7ea485" strokeWidth="8" filter="url(#karten-schatten)" />
-        <g fill="none" stroke="#d6a05a" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" opacity=".8">
-          <path d="M250 420 245 355 240 210 320 165 410 180 440 270 545 255" />
-          <path d="M245 355 350 255 440 270 405 350 400 420" />
-          <path d="M250 420 240 455M240 455 315 450 400 420" />
-          <path d="M245 355 180 290 145 150 120 120" />
+      <svg viewBox="0 0 700 500" role="img" aria-label={`Detaillierte Kanto-Karte im Feuerrot-Stil mit markiertem Ort: ${info.ort}`} shapeRendering="crispEdges">
+        <defs>
+          <pattern id="wasser-muster" width="32" height="24" patternUnits="userSpaceOnUse">
+            <rect width="32" height="24" fill="#4e9db9" />
+            <path d="M0 7h10v3h12V7h10M7 18h9v-3h10" fill="none" stroke="#78bdd0" strokeWidth="2" opacity=".7" />
+          </pattern>
+          <pattern id="gras-muster" width="20" height="20" patternUnits="userSpaceOnUse">
+            <rect width="20" height="20" fill="#cfe59a" />
+            <path d="M3 15h3v-3m8-5h3V4" fill="none" stroke="#a9cc79" strokeWidth="2" opacity=".65" />
+          </pattern>
+          <filter id="karten-schatten"><feDropShadow dx="0" dy="5" stdDeviation="2" floodColor="#245d6f" floodOpacity=".38" /></filter>
+        </defs>
+
+        <rect width="700" height="500" fill="url(#wasser-muster)" />
+        <path d="M86 68h112v24h54v25h82v22h72v-15h62v22h70v25h61v46h34v84h-29v46h-52v39h-52v37h-69v-19h-63v27h-54v-18h-57v-41h-34v-55h-31v-73h16v-69h-22v-64H86Z" fill="url(#gras-muster)" stroke="#397b65" strokeWidth="7" filter="url(#karten-schatten)" />
+        <path d="M215 405h69v39h-17v25h-55v-20h-15v-28h18ZM296 437h42v22h-42ZM365 413h68v28h-68Z" fill="url(#gras-muster)" stroke="#397b65" strokeWidth="6" />
+        <path d="M91 367h68v48H91Z" fill="#b9d781" stroke="#397b65" strokeWidth="6" />
+
+        <g className="karten-routen" fill="none" strokeLinecap="square" strokeLinejoin="miter">
+          <g stroke="#6e724d" strokeWidth="16">
+            <path d="M250 420V355H240V210h80v-45h90v15M410 180v-45h58" />
+            <path d="M410 180h30v90H350M440 270h105v-15M440 270l-35 80-5 70M405 350h75M545 255v90h-55l-90 75" />
+            <path d="M350 255v75h-25v70l75 20M245 355h-35v-30h-45V210h75M165 210v-60h-45v-30" />
+          </g>
+          <g stroke="#e2c36f" strokeWidth="10">
+            <path d="M250 420V355H240V210h80v-45h90v15M410 180v-45h58" />
+            <path d="M410 180h30v90H350M440 270h105v-15M440 270l-35 80-5 70M405 350h75M545 255v90h-55l-90 75" />
+            <path d="M350 255v75h-25v70l75 20M245 355h-35v-30h-45V210h75M165 210v-60h-45v-30" />
+          </g>
         </g>
-        <g>{orte.map(([name, x, y]) => <g key={name}><circle cx={x} cy={y} r="8" fill="#fff" stroke="#284b43" strokeWidth="5" /><text x={x} y={y - 14} textAnchor="middle">{name}</text></g>)}</g>
-        <g className="karten-marker"><circle cx={info.x} cy={info.y} r="24" /><circle cx={info.x} cy={info.y} r="9" /><path d={`M${info.x} ${info.y + 25}l-10 18h20Z`} /></g>
+
+        <g className="wasser-routen" fill="none" stroke="#d9eff1" strokeWidth="4" strokeDasharray="7 6" opacity=".9">
+          <path d="M250 420v35M240 455h75M315 455h85v-35M400 420v40" />
+          <path d="M120 390h65" />
+        </g>
+        <g className="karten-tunnel" fill="none" stroke="#76624d" strokeWidth="4" strokeDasharray="3 5" opacity=".78">
+          <path d="M255 220 390 338" />
+        </g>
+
+        <g className="karten-berge">
+          {berge.map(([x, y], index) => <g key={`${x}-${y}`} transform={`translate(${x} ${y})`}><path d="M-13 12 0-12l13 24Z" fill={index % 2 ? '#9a8362' : '#a89068'} stroke="#665a49" strokeWidth="3" /><path d="m-5-2 5-10 5 10-5-3Z" fill="#e7e0c8" /></g>)}
+        </g>
+        <g className="karten-baeume">
+          {baeume.map(([x, y]) => <g key={`${x}-${y}`} transform={`translate(${x} ${y})`}><rect x="-2" y="5" width="5" height="7" fill="#745b39" /><path d="M0-12 11 5H5l7 7h-24l7-7h-6Z" fill="#4f9455" stroke="#347243" strokeWidth="2" /></g>)}
+        </g>
+
+        <g className="karten-landmarken">
+          <g transform="translate(320 165)"><rect x="-11" y="-9" width="22" height="18" fill="#816e5d" stroke="#514a42" strokeWidth="3" /><path d="m-8-2 8-9 8 9Z" fill="#b5a18b" /><text x="0" y="-17">Mondberg</text></g>
+          <g transform="translate(520 195)"><rect x="-10" y="-8" width="20" height="16" fill="#756a60" stroke="#4e4944" strokeWidth="3" /><circle cx="0" cy="3" r="4" fill="#322f2d" /><text x="0" y="-15">Felstunnel</text></g>
+          <g transform="translate(580 205)"><path d="M-10 9h20V-7H3v-7h-6v7h-7Z" fill="#c8c5b4" stroke="#575d58" strokeWidth="3" /><path d="m-2-9 5-9 2 7 7-2-7 10" fill="none" stroke="#e4bd38" strokeWidth="3" /><text x="0" y="18">Kraftwerk</text></g>
+          <g transform="translate(386 390)"><rect x="-15" y="-10" width="30" height="20" fill="#70a659" stroke="#3a7142" strokeWidth="3" /><path d="M-10 5V-5h7V5m6 0V-5h7V5" fill="#b9dd84" /><text x="0" y="-17">Safari-Zone</text></g>
+          <g transform="translate(215 258)"><text x="0" y="0">Vertania-Wald</text></g>
+          <g transform="translate(326 293)"><text x="0" y="0">Digda-Höhle</text></g>
+          <g transform="translate(315 455)"><path d="M-20 8-8-8 0 3 9-10 21 8Z" fill="#87aa8b" stroke="#3e766d" strokeWidth="4" /><text x="0" y="22">Seeschaum</text></g>
+          <g transform="translate(125 390)"><path d="M-24 5h14l6-18L4 5h20v15h-48Z" fill="#cfe59a" stroke="#397b65" strokeWidth="4" /><text x="0" y="34">Sevii-Eilande</text></g>
+        </g>
+
+        <g className="routen-nummern">{routenNummern.map(([name, x, y]) => <text x={x} y={y} key={name}>{name}</text>)}</g>
+        <g className="karten-orte">{orte.map(({ name, x, y, farbe }) => <g key={name}><rect x={x - 9} y={y - 9} width="18" height="18" fill="#f7f0cf" stroke="#304d43" strokeWidth="4" /><rect x={x - 5} y={y - 5} width="10" height="10" fill={farbe} /><text x={x} y={y - 16} textAnchor="middle">{name}</text></g>)}</g>
+        {markerAnzeigen && <g className={`karten-marker ${nurLeuchten ? 'karten-marker--nur-leuchten' : ''}`}><circle cx={info.x} cy={info.y} r="24" />{!nurLeuchten && <><circle cx={info.x} cy={info.y} r="9" /><path d={`M${info.x} ${info.y + 25}l-10 18h20Z`} /></>}</g>}
       </svg>
-      <div><span>MARKIERTER ORT</span><strong>{info.ort}</strong><small>Schematische Orientierungskarte – die genaue Wegbeschreibung steht beim Info-Knopf.</small></div>
+      <div><span>MARKIERTER ORT</span><strong>{info.ort}</strong><small>Detailkarte im Feuerrot-Stil – die genaue Schrittfolge steht weiterhin beim Info-Knopf.</small></div>
     </div>
   )
 }
@@ -2055,7 +2186,7 @@ function AbenteuerPlan({ zurueck }: { zurueck: () => void }) {
       <header className="abenteuer-kopf"><button className="zurueck" onClick={zurueck}>← Startseite</button><span className="edition">FEUERROT · SOULLINK-ABENTEUERPLAN</span><h1>Von Arena zu Arena.</h1><p>Ein überschaubarer roter Faden durch Kanto. Hake die wichtigsten Schritte ab und behalte Regeln, Begegnungen und Level-Caps im Blick.</p></header>
       <section className="abenteuer-inhalt">
         <div className="abenteuer-gesamt"><div><small>GESAMTFORTSCHRITT</small><strong>{gesamtFertig} von {allePunkte} Schritten</strong></div><span><i style={{ width: `${(gesamtFertig / allePunkte) * 100}%` }} /></span></div>
-        <nav className="etappen-leiste" aria-label="Abenteuerabschnitt auswählen">{ABENTEUER_ETAPPEN.map((eintrag, index) => { const fertig = eintrag.punkte.every((_, punkt) => erledigt[`${index}-${punkt}`]); return <button className={`${etappeIndex === index ? 'aktiv' : ''} ${fertig ? 'fertig' : ''}`} key={eintrag.name} onClick={() => wechseln(index)}><span>{index < 8 ? index + 1 : index < 12 ? `T${index - 7}` : 'C'}</span><small>{eintrag.name}</small></button> })}</nav>
+        <nav className="etappen-leiste" aria-label="Abenteuerabschnitt auswählen">{ABENTEUER_ETAPPEN.map((eintrag, index) => { const fertig = eintrag.punkte.every((_, punkt) => erledigt[`${index}-${punkt}`]); return <button className={`${etappeIndex === index ? 'aktiv' : ''} ${fertig ? 'fertig' : ''}`} key={eintrag.name} onClick={() => wechseln(index)}>{index < 8 ? <OrdenSymbol index={index} /> : <LigaSymbol index={index - 8} />}<small>{eintrag.name}</small></button> })}</nav>
         <article className="etappe-karte">
           <header><div><span>ABSCHNITT {String(etappeIndex + 1).padStart(2, '0')}</span><h2>{etappe.name}: {etappe.ziel}</h2><p>{etappe.fokus}</p></div><div className="etappe-cap"><small>LEVEL-CAP</small><strong>{etappe.cap}</strong><button onClick={alsFortschrittSetzen}>Als aktuellen Fortschritt übernehmen</button></div></header>
           <div className="etappe-fortschritt"><span><i style={{ width: `${(fertigInEtappe / etappe.punkte.length) * 100}%` }} /></span><strong>{fertigInEtappe} / {etappe.punkte.length} erledigt</strong></div>
@@ -2068,121 +2199,181 @@ function AbenteuerPlan({ zurueck }: { zurueck: () => void }) {
   )
 }
 
-type BegegnungsStatus = 'offen' | 'gefangen' | 'fehlgeschlagen' | 'ausnahme'
-type BegegnungEintrag = {
-  id: string
-  gebiet: string
-  pokemonRot: string
-  pokemonBlau: string
-  status: BegegnungsStatus
-  ausnahme: string
-  notiz: string
-}
+type EncounterGebiet = { id: string; name: string; level: string; hinweis?: string }
+type EncounterAbschnitt = { titel: string; untertitel: string; gebiete: EncounterGebiet[] }
 
-const GEBIETS_VORSCHLAEGE = [
-  ...Array.from({ length: 25 }, (_, index) => `Route ${index + 1}`),
-  'Vertania-Wald', 'Mondberg', 'Digda-Höhle', 'Felstunnel', 'Pokémon-Turm',
-  'Kraftwerk', 'Safari-Zone', 'Seeschauminseln', 'Pokémon-Villa', 'Siegesstraße',
-  'Azuria-Höhle', 'Glutberg', 'Eiskaskadenhöhle', 'Beerenforst', 'Verlorene Höhle',
-  'Musterbuschwald', 'Wandelhöhle', 'Wasserweg', 'Ruinental', '7-Schatzschlucht',
+const ENCOUNTER_ABSCHNITTE: EncounterAbschnitt[] = [
+  { titel: 'Der erste Orden', untertitel: 'Alabastia bis Marmoria City', gebiete: [
+    { id: 'route-1', name: 'Route 1', level: '2–5' }, { id: 'route-22-frueh', name: 'Route 22', level: '2–5', hinweis: 'Optional vor dem ersten Orden' },
+    { id: 'route-2-sued', name: 'Route 2', level: '2–5' }, { id: 'vertania-wald', name: 'Vertania-Wald', level: '3–6' },
+  ]},
+  { titel: 'Zum zweiten Orden', untertitel: 'Marmoria City bis Azuria City', gebiete: [
+    { id: 'route-3', name: 'Route 3', level: '6–8' }, { id: 'mondberg', name: 'Mondberg', level: '6–12' },
+    { id: 'route-4', name: 'Route 4', level: '6–12' },
+  ]},
+  { titel: 'Zum dritten Orden', untertitel: 'Azuria City bis Orania City', gebiete: [
+    { id: 'route-24', name: 'Route 24', level: '7–13' }, { id: 'route-25', name: 'Route 25', level: '7–13' },
+    { id: 'route-5', name: 'Route 5', level: '13–16' }, { id: 'route-6', name: 'Route 6', level: '13–16' },
+    { id: 'ms-anne', name: 'M.S. Anne', level: '15–25', hinweis: 'Nur Angeln; vor dem Ablegen erledigen' },
+    { id: 'digda-hoehle', name: 'Digda-Höhle', level: '15–31' }, { id: 'route-11', name: 'Route 11', level: '13–15' },
+  ]},
+  { titel: 'Zum vierten Orden', untertitel: 'Orania City bis Prismania City', gebiete: [
+    { id: 'route-9', name: 'Route 9', level: '11–17' }, { id: 'route-10-nord', name: 'Route 10 (Nord)', level: '11–17' },
+    { id: 'felstunnel', name: 'Felstunnel', level: '15–18' }, { id: 'route-10-sued', name: 'Route 10 (Süd)', level: '11–17', hinweis: 'Gleiches Routengebiet wie Route 10 Nord' },
+    { id: 'route-8', name: 'Route 8', level: '18–22' }, { id: 'route-7', name: 'Route 7', level: '19–22' },
+  ]},
+  { titel: 'Pokéflöte und Fuchsania', untertitel: 'Lavandia, Küstenrouten und Safari-Zone', gebiete: [
+    { id: 'pokemon-turm', name: 'Pokémon-Turm', level: '13–19' }, { id: 'route-12', name: 'Route 12', level: '22–27' },
+    { id: 'route-13', name: 'Route 13', level: '22–27' }, { id: 'route-14', name: 'Route 14', level: '22–30' },
+    { id: 'route-15', name: 'Route 15', level: '22–30' }, { id: 'route-16', name: 'Route 16', level: '18–25' },
+    { id: 'route-17', name: 'Route 17', level: '20–29' }, { id: 'route-18', name: 'Route 18', level: '22–29' },
+    { id: 'safari-mitte', name: 'Safari-Zone: Eingang/Mitte', level: '22–25' }, { id: 'safari-ost', name: 'Safari-Zone: Gebiet 1 (Ost)', level: '22–26' },
+    { id: 'safari-nord', name: 'Safari-Zone: Gebiet 2 (Nord)', level: '22–30' }, { id: 'safari-west', name: 'Safari-Zone: Gebiet 3 (West)', level: '23–30' },
+  ]},
+  { titel: 'Surfer-Gebiete', untertitel: 'Nach Erhalt von VM03 Surfer', gebiete: [
+    { id: 'route-19', name: 'Route 19', level: '5–40' }, { id: 'route-20', name: 'Route 20', level: '5–40' },
+    { id: 'seeschauminseln', name: 'Seeschauminseln', level: '22–36' }, { id: 'route-21', name: 'Route 21', level: '5–40' },
+    { id: 'kraftwerk', name: 'Kraftwerk', level: '21–35' }, { id: 'alabastia-wasser', name: 'Alabastia (Wasser)', level: '5–40', hinweis: 'Angeln/Surfen zählt nur separat, wenn eure Regeln das erlauben' },
+  ]},
+  { titel: 'Siebter und achter Orden', untertitel: 'Zinnoberinsel bis Vertania City', gebiete: [
+    { id: 'pokemon-haus', name: 'Pokémon-Haus', level: '28–35' }, { id: 'schatzstrand', name: 'Schatzgestade', level: '5–40' },
+    { id: 'gluehweg', name: 'Glühweg', level: '30–40' }, { id: 'glutberg', name: 'Glutberg', level: '30–40' },
+    { id: 'kap-kante', name: 'Kap Kante', level: '5–40' }, { id: 'dreierinsel-hafen', name: 'Dreierinsel-Hafen', level: '5–40' },
+    { id: 'bundbruecke', name: 'Bundbrücke', level: '29–35' }, { id: 'beerenforst', name: 'Beerenforst', level: '30–40' },
+  ]},
+  { titel: 'Pokémon-Liga', untertitel: 'Vom Erdorden bis zum Champ', gebiete: [
+    { id: 'route-22-spaet', name: 'Route 22 (Rückkehr)', level: '2–5', hinweis: 'Gleiches Routengebiet wie Route 22 früh' },
+    { id: 'route-23', name: 'Route 23', level: '26–43' }, { id: 'siegesstrasse', name: 'Siegesstraße', level: '32–46' },
+  ]},
+  { titel: 'Nach dem Champ', untertitel: 'Optionale und Sevii-Nachspiel-Gebiete', gebiete: [
+    { id: 'azuria-hoehle', name: 'Azuria-Höhle', level: '46–67' }, { id: 'viererinsel', name: 'Viererinsel', level: '5–40' },
+    { id: 'eiskaskadenhoehle', name: 'Eiskaskadenhöhle', level: '38–52' }, { id: 'fuenferinsel', name: 'Fünferinsel', level: '5–40' },
+    { id: 'gedenksaeule', name: 'Gedenksäule', level: '44–50' }, { id: 'wasserweg', name: 'Wasserweg', level: '44–50' },
+    { id: 'verlorene-hoehle', name: 'Verlorene Höhle', level: '49–55' }, { id: 'sechserinsel', name: 'Sechserinsel', level: '5–40' },
+    { id: 'gruenpfad', name: 'Grünpfad', level: '44–50' }, { id: 'musterbuschwald', name: 'Musterbuschwald', level: '49–52' },
+    { id: 'ruinental', name: 'Ruinental', level: '49–52' }, { id: 'siebenerinsel', name: 'Siebenerinsel', level: '5–40' },
+    { id: 'trainerschlucht', name: 'Trainerschlucht', level: '50–55' }, { id: 'schatzschlucht', name: '7-Schatzschlucht', level: '50–55' },
+  ]},
 ]
 
-const STATUS_TEXTE: Record<BegegnungsStatus, string> = {
-  offen: 'Noch offen',
-  gefangen: 'Erfolgreich gefangen',
-  fehlgeschlagen: 'Fang fehlgeschlagen',
-  ausnahme: 'Sonderbegegnung',
-}
+type EncounterKartenOrt = { id: string; name: string; x: number; y: number; gebiete: string[]; art: 'stadt' | 'route' | 'gebiet' | 'hoehle' }
+
+const ENCOUNTER_KARTEN_ORTE: EncounterKartenOrt[] = [
+  { id: 'stadt-alabastia', name: 'Alabastia', x: 250, y: 420, gebiete: ['route-1', 'route-21', 'alabastia-wasser'], art: 'stadt' },
+  { id: 'stadt-vertania', name: 'Vertania', x: 245, y: 355, gebiete: ['route-1', 'route-2-sued', 'route-22-frueh'], art: 'stadt' },
+  { id: 'stadt-marmoria', name: 'Marmoria', x: 240, y: 210, gebiete: ['route-2-sued', 'vertania-wald', 'route-3'], art: 'stadt' },
+  { id: 'stadt-azuria', name: 'Azuria', x: 410, y: 180, gebiete: ['route-4', 'route-5', 'route-24', 'route-25', 'azuria-hoehle'], art: 'stadt' },
+  { id: 'stadt-prismania', name: 'Prismania', x: 350, y: 255, gebiete: ['route-7', 'route-16'], art: 'stadt' },
+  { id: 'stadt-saffronia', name: 'Saffronia', x: 440, y: 270, gebiete: ['route-5', 'route-6', 'route-7', 'route-8'], art: 'stadt' },
+  { id: 'stadt-lavandia', name: 'Lavandia', x: 545, y: 255, gebiete: ['route-8', 'route-10-sued', 'route-12', 'pokemon-turm'], art: 'stadt' },
+  { id: 'stadt-orania', name: 'Orania', x: 405, y: 350, gebiete: ['route-6', 'route-11', 'ms-anne', 'digda-hoehle'], art: 'stadt' },
+  { id: 'stadt-fuchsania', name: 'Fuchsania', x: 400, y: 420, gebiete: ['route-15', 'route-18', 'route-19', 'safari-mitte'], art: 'stadt' },
+  { id: 'stadt-zinnober', name: 'Zinnober', x: 240, y: 455, gebiete: ['route-20', 'route-21', 'pokemon-haus'], art: 'stadt' },
+  { id: 'route-1-punkt', name: 'Route 1', x: 248, y: 389, gebiete: ['route-1', 'route-2-sued', 'route-22-frueh'], art: 'route' },
+  { id: 'route-2-punkt', name: 'Route 2', x: 240, y: 283, gebiete: ['route-2-sued', 'vertania-wald', 'route-1', 'route-3'], art: 'route' },
+  { id: 'route-3-punkt', name: 'Route 3', x: 280, y: 193, gebiete: ['route-3', 'mondberg', 'route-4'], art: 'route' },
+  { id: 'route-4-punkt', name: 'Route 4', x: 365, y: 172, gebiete: ['route-4', 'mondberg', 'route-24', 'route-25'], art: 'route' },
+  { id: 'route-5-punkt', name: 'Route 5', x: 425, y: 224, gebiete: ['route-5', 'route-24', 'route-25', 'route-6', 'route-7', 'route-8'], art: 'route' },
+  { id: 'route-6-punkt', name: 'Route 6', x: 423, y: 315, gebiete: ['route-6', 'route-5', 'route-11', 'ms-anne'], art: 'route' },
+  { id: 'route-7-punkt', name: 'Route 7', x: 392, y: 258, gebiete: ['route-7', 'route-8', 'route-16'], art: 'route' },
+  { id: 'route-8-punkt', name: 'Route 8', x: 500, y: 261, gebiete: ['route-8', 'route-7', 'pokemon-turm', 'route-12'], art: 'route' },
+  { id: 'route-9-punkt', name: 'Route 9', x: 466, y: 177, gebiete: ['route-9', 'route-10-nord', 'felstunnel', 'kraftwerk'], art: 'route' },
+  { id: 'route-10-punkt', name: 'Route 10', x: 526, y: 210, gebiete: ['route-10-nord', 'felstunnel', 'route-10-sued', 'kraftwerk'], art: 'route' },
+  { id: 'route-11-punkt', name: 'Route 11', x: 474, y: 348, gebiete: ['route-11', 'digda-hoehle', 'route-12', 'ms-anne'], art: 'route' },
+  { id: 'route-12-punkt', name: 'Route 12', x: 552, y: 300, gebiete: ['route-12', 'route-11', 'route-13', 'pokemon-turm'], art: 'route' },
+  { id: 'route-13-punkt', name: 'Route 13', x: 548, y: 340, gebiete: ['route-13', 'route-12', 'route-14'], art: 'route' },
+  { id: 'route-14-punkt', name: 'Route 14', x: 510, y: 365, gebiete: ['route-14', 'route-13', 'route-15'], art: 'route' },
+  { id: 'route-15-punkt', name: 'Route 15', x: 465, y: 392, gebiete: ['route-15', 'route-14', 'safari-ost', 'safari-mitte'], art: 'route' },
+  { id: 'route-16-punkt', name: 'Route 16', x: 330, y: 300, gebiete: ['route-16', 'route-7', 'route-17'], art: 'route' },
+  { id: 'route-17-punkt', name: 'Route 17', x: 325, y: 350, gebiete: ['route-17', 'route-16', 'route-18'], art: 'route' },
+  { id: 'route-18-punkt', name: 'Route 18', x: 355, y: 405, gebiete: ['route-18', 'route-17', 'safari-west', 'safari-mitte'], art: 'route' },
+  { id: 'route-19-punkt', name: 'Route 19', x: 397, y: 454, gebiete: ['route-19', 'route-20', 'safari-mitte'], art: 'route' },
+  { id: 'route-20-punkt', name: 'Route 20', x: 315, y: 462, gebiete: ['route-20', 'route-19', 'seeschauminseln', 'pokemon-haus'], art: 'route' },
+  { id: 'route-21-punkt', name: 'Route 21', x: 247, y: 443, gebiete: ['route-21', 'alabastia-wasser', 'pokemon-haus'], art: 'route' },
+  { id: 'route-22-punkt', name: 'Route 22', x: 205, y: 348, gebiete: ['route-22-frueh', 'route-22-spaet', 'route-23'], art: 'route' },
+  { id: 'route-23-punkt', name: 'Route 23', x: 145, y: 245, gebiete: ['route-23', 'route-22-spaet', 'siegesstrasse'], art: 'route' },
+  { id: 'route-24-punkt', name: 'Route 24', x: 410, y: 145, gebiete: ['route-24', 'route-25', 'route-4'], art: 'route' },
+  { id: 'route-25-punkt', name: 'Route 25', x: 468, y: 127, gebiete: ['route-25', 'route-24', 'route-4'], art: 'route' },
+  { id: 'gebiet-mondberg', name: 'Mondberg', x: 320, y: 165, gebiete: ['mondberg', 'route-3', 'route-4'], art: 'hoehle' },
+  { id: 'gebiet-felstunnel', name: 'Felstunnel', x: 520, y: 195, gebiete: ['felstunnel', 'route-10-nord', 'route-10-sued'], art: 'hoehle' },
+  { id: 'gebiet-kraftwerk', name: 'Kraftwerk', x: 580, y: 205, gebiete: ['kraftwerk', 'route-9', 'route-10-nord'], art: 'gebiet' },
+  { id: 'gebiet-safari', name: 'Safari-Zone', x: 386, y: 390, gebiete: ['safari-mitte', 'safari-ost', 'safari-nord', 'safari-west'], art: 'gebiet' },
+  { id: 'gebiet-seeschaum', name: 'Seeschauminseln', x: 315, y: 450, gebiete: ['seeschauminseln', 'route-19', 'route-20'], art: 'hoehle' },
+  { id: 'gebiet-indigo', name: 'Indigo-Plateau', x: 120, y: 120, gebiete: ['route-23', 'siegesstrasse'], art: 'gebiet' },
+  { id: 'gebiet-sevii', name: 'Sevii-Eilande', x: 125, y: 390, gebiete: ['schatzstrand', 'gluehweg', 'glutberg', 'kap-kante', 'dreierinsel-hafen', 'bundbruecke', 'beerenforst'], art: 'gebiet' },
+]
 
 function BegegnungsTracker({ zurueck }: { zurueck: () => void }) {
-  const [eintraege, setEintraege] = useState<BegegnungEintrag[]>(() => {
+  const [erledigt, setErledigt] = useState<Record<string, boolean>>(() => {
     try {
-      return JSON.parse(localStorage.getItem('feuerrot-begegnungen') ?? '[]') as BegegnungEintrag[]
+      return JSON.parse(localStorage.getItem('feuerrot-encounter-checkliste') ?? '{}') as Record<string, boolean>
     } catch {
-      return []
+      return {}
     }
   })
-  const [filter, setFilter] = useState<'alle' | BegegnungsStatus>('alle')
-  const namen = gespeicherteNamenLesen()
+  const [aktiverAbschnitt, setAktiverAbschnitt] = useState(0)
+  const [kartenOrt, setKartenOrt] = useState<EncounterKartenOrt | null>(null)
 
   useEffect(() => {
-    localStorage.setItem('feuerrot-begegnungen', JSON.stringify(eintraege))
-  }, [eintraege])
+    localStorage.setItem('feuerrot-encounter-checkliste', JSON.stringify(erledigt))
+  }, [erledigt])
 
-  function hinzufuegen() {
-    const neu: BegegnungEintrag = {
-      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      gebiet: '', pokemonRot: '', pokemonBlau: '', status: 'offen', ausnahme: 'Keine', notiz: '',
-    }
-    setEintraege((aktuell) => [neu, ...aktuell])
+  const alleGebiete = ENCOUNTER_ABSCHNITTE.flatMap((abschnitt) => abschnitt.gebiete)
+  const anzahlErledigt = alleGebiete.filter((gebiet) => erledigt[gebiet.id]).length
+  const prozent = Math.round((anzahlErledigt / alleGebiete.length) * 100)
+  const gebietNachId = new Map(alleGebiete.map((gebiet) => [gebiet.id, gebiet]))
+  const naheGebiete = kartenOrt?.gebiete.map((id) => gebietNachId.get(id)).filter((gebiet): gebiet is EncounterGebiet => Boolean(gebiet)) ?? []
+  const kartenInfo: AbenteuerInfo = { titel: kartenOrt?.name ?? 'Kanto', ort: kartenOrt?.name ?? 'Wähle einen Ort oder eine Route', x: kartenOrt?.x ?? 350, y: kartenOrt?.y ?? 255, beschreibung: '', weg: [] }
+
+  function ortWaehlen(ort: EncounterKartenOrt) {
+    setKartenOrt(ort)
+    const erstesGebiet = ort.gebiete.find((id) => gebietNachId.has(id))
+    const abschnitt = ENCOUNTER_ABSCHNITTE.findIndex((eintrag) => eintrag.gebiete.some((gebiet) => gebiet.id === erstesGebiet))
+    if (abschnitt >= 0) setAktiverAbschnitt(abschnitt)
   }
-
-  function aendern(id: string, werte: Partial<BegegnungEintrag>) {
-    setEintraege((aktuell) => aktuell.map((eintrag) => eintrag.id === id ? { ...eintrag, ...werte } : eintrag))
-  }
-
-  function entfernen(id: string) {
-    if (window.confirm('Diesen Gebiets-Eintrag wirklich löschen?')) {
-      setEintraege((aktuell) => aktuell.filter((eintrag) => eintrag.id !== id))
-    }
-  }
-
-  const sichtbar = filter === 'alle' ? eintraege : eintraege.filter((eintrag) => eintrag.status === filter)
-  const anzahl = (status: BegegnungsStatus) => eintraege.filter((eintrag) => eintrag.status === status).length
 
   return (
     <main className="begegnungen-seite">
       <header className="begegnungen-kopf">
         <button className="zurueck" onClick={zurueck}>← Startseite</button>
-        <span className="edition">SOULLINK · ERSTE BEGEGNUNG</span>
-        <h1>Keine Route vergessen.</h1>
-        <p>Dokumentiere jede Erstbegegnung und erkenne sofort, in welchen Gebieten euer gemeinsamer Fang noch offen ist.</p>
+        <span className="edition">FEUERROT · ENCOUNTER-CHECKLISTE</span>
+        <h1>Jedes Fanggebiet. In richtiger Reihenfolge.</h1>
+        <p>Hake ein Gebiet ab, sobald euer Erstbegegnungs-Versuch abgeschlossen ist. Die Level zeigen die Spanne der regulären Feuerrot-Begegnungen vor dem Randomisieren.</p>
       </header>
 
       <section className="begegnungen-inhalt">
-        <div className="begegnungen-statistik">
-          <div><strong>{eintraege.length}</strong><span>Gebiete erfasst</span></div>
-          <div><strong>{anzahl('offen')}</strong><span>Noch offen</span></div>
-          <div><strong>{anzahl('gefangen')}</strong><span>Gefangen</span></div>
-          <div><strong>{anzahl('fehlgeschlagen')}</strong><span>Fehlgeschlagen</span></div>
+        <div className="encounter-fortschritt">
+          <div><strong>{anzahlErledigt} / {alleGebiete.length}</strong><span>Gebiete erledigt</span></div>
+          <div className="encounter-balken"><i style={{ width: `${prozent}%` }} /></div>
+          <b>{prozent}%</b>
         </div>
-
-        <div className="begegnungen-werkzeugleiste">
-          <div className="begegnungen-filter">
-            {(['alle', 'offen', 'gefangen', 'fehlgeschlagen', 'ausnahme'] as const).map((wert) => (
-              <button className={filter === wert ? 'aktiv' : ''} key={wert} onClick={() => setFilter(wert)}>{wert === 'alle' ? 'Alle' : STATUS_TEXTE[wert]}</button>
-            ))}
+        <section className="encounter-karte">
+          <header><div><span>INTERAKTIVE KARTE</span><h2>Wo bist du gerade?</h2><p>Klicke auf den nächstgelegenen Ort. Die passenden Fanggebiete erscheinen direkt daneben.</p></div><b>{kartenOrt?.name ?? 'Ort wählen'}</b></header>
+          <div className="encounter-karte__layout">
+            <div className="encounter-feuerrot-karte" role="group" aria-label="Anklickbare Feuerrot-Karte von Kanto mit Städten und Routen">
+              <KantoKarte info={kartenInfo} nurLeuchten markerAnzeigen={Boolean(kartenOrt)} />
+              <div className="encounter-kartenpunkte">{ENCOUNTER_KARTEN_ORTE.map((ort) => <button key={ort.id} className={`${ort.art} ${kartenOrt?.id === ort.id ? 'aktiv' : ''} ${ort.gebiete.every((id) => erledigt[id]) ? 'fertig' : ''}`} style={{ left: `${(ort.x / 700) * 100}%`, top: `${(ort.y / 500) * 100}%` }} onClick={() => ortWaehlen(ort)} title={`${ort.name} auswählen`} aria-label={`${ort.name}: Begegnungen in der Nähe anzeigen`}><span>{ort.name}</span></button>)}</div>
+            </div>
+            <div className="encounter-naehe">
+              <div className="encounter-naehe__kopf"><span>ENCOUNTER IN DER NÄHE</span><strong>{kartenOrt ? `${naheGebiete.length} Gebiete bei ${kartenOrt.name}` : 'Wähle einen Ort auf der Karte'}</strong></div>
+              {kartenOrt ? <div>{naheGebiete.map((gebiet) => <label className={`encounter-naehe__zeile ${erledigt[gebiet.id] ? 'erledigt' : ''}`} key={gebiet.id}><input type="checkbox" checked={Boolean(erledigt[gebiet.id])} onChange={() => setErledigt((aktuell) => ({ ...aktuell, [gebiet.id]: !aktuell[gebiet.id] }))} /><i>{erledigt[gebiet.id] ? '✓' : ''}</i><span><strong>{gebiet.name}</strong><small>Lv. {gebiet.level}</small></span><b>{erledigt[gebiet.id] ? 'ERLEDIGT' : 'OFFEN'}</b></label>)}</div> : <p className="encounter-naehe__leer">Klicke direkt auf eine Stadt, eine Route oder ein besonderes Gebiet. Grüne Punkte sind vollständig erledigt.</p>}
+            </div>
           </div>
-          <button className="begegnung-neu" onClick={hinzufuegen}>+ Gebiet eintragen</button>
+        </section>
+        <div className="encounter-auswahl">
+          <label htmlFor="encounter-abschnitt">Orden oder Storyabschnitt</label>
+          <select id="encounter-abschnitt" value={aktiverAbschnitt} onChange={(event) => setAktiverAbschnitt(Number(event.target.value))}>
+            {ENCOUNTER_ABSCHNITTE.map((abschnitt, index) => {
+              const erledigteGebiete = abschnitt.gebiete.filter((gebiet) => erledigt[gebiet.id]).length
+              return <option value={index} key={abschnitt.titel}>{abschnitt.titel} · {erledigteGebiete}/{abschnitt.gebiete.length}</option>
+            })}
+          </select>
         </div>
-
-        <datalist id="gebiets-vorschlaege">{GEBIETS_VORSCHLAEGE.map((gebiet) => <option value={gebiet} key={gebiet} />)}</datalist>
-
-        {sichtbar.length ? (
-          <div className="begegnungen-liste">
-            {sichtbar.map((eintrag, index) => (
-              <article className={`begegnung-karte begegnung-karte--${eintrag.status}`} key={eintrag.id}>
-                <header>
-                  <span>{String(eintraege.length - index).padStart(2, '0')}</span>
-                  <label>Route oder Gebiet<input list="gebiets-vorschlaege" value={eintrag.gebiet} onChange={(event) => aendern(eintrag.id, { gebiet: event.target.value })} placeholder="z. B. Route 3" /></label>
-                  <label>Status<select value={eintrag.status} onChange={(event) => aendern(eintrag.id, { status: event.target.value as BegegnungsStatus })}>{(Object.keys(STATUS_TEXTE) as BegegnungsStatus[]).map((status) => <option value={status} key={status}>{STATUS_TEXTE[status]}</option>)}</select></label>
-                  <button onClick={() => entfernen(eintrag.id)} aria-label="Gebiets-Eintrag löschen">×</button>
-                </header>
-                <div className="begegnung-paar">
-                  <label className="begegnung-pokemon begegnung-pokemon--rot"><span>{namen.rot || 'Team Rot'}</span><input value={eintrag.pokemonRot} onChange={(event) => aendern(eintrag.id, { pokemonRot: event.target.value })} placeholder="Erstes Pokémon …" /></label>
-                  <span className="begegnung-verbindung">↔<small>Seelenpartner</small></span>
-                  <label className="begegnung-pokemon begegnung-pokemon--blau"><span>{namen.blau || 'Team Blau'}</span><input value={eintrag.pokemonBlau} onChange={(event) => aendern(eintrag.id, { pokemonBlau: event.target.value })} placeholder="Erstes Pokémon …" /></label>
-                </div>
-                <div className="begegnung-zusatz">
-                  <label>Ausnahme<select value={eintrag.ausnahme} onChange={(event) => aendern(eintrag.id, { ausnahme: event.target.value })}><option>Keine</option><option>Geschenktes Pokémon</option><option>Statisches Pokémon</option><option>Fossil</option><option>Shiny-Klausel</option></select></label>
-                  <label>Notiz<input value={eintrag.notiz} onChange={(event) => aendern(eintrag.id, { notiz: event.target.value })} placeholder="Optional: Fangversuch, Besonderheit …" /></label>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="begegnungen-leer"><span>⌖</span><strong>{eintraege.length ? 'Kein Eintrag passt zum Filter' : 'Noch kein Gebiet erfasst'}</strong><p>Lege den ersten Eintrag an, sobald ihr eure ersten Pokébälle erhalten habt.</p><button onClick={hinzufuegen}>Erstes Gebiet eintragen</button></div>
-        )}
+        {(() => {
+          const abschnitt = ENCOUNTER_ABSCHNITTE[aktiverAbschnitt]
+          return <div className="encounter-abschnitte"><section className="encounter-abschnitt" key={abschnitt.titel}><header><span className="encounter-abschnitt__symbol">{aktiverAbschnitt < 8 ? <OrdenSymbol index={aktiverAbschnitt} /> : <LigaSymbol index={4} />}</span><div><h2>{abschnitt.titel}</h2><p>{abschnitt.untertitel}</p></div></header><div>{abschnitt.gebiete.map((gebiet) => <label className={`encounter-zeile ${erledigt[gebiet.id] ? 'erledigt' : ''}`} key={gebiet.id}><input type="checkbox" checked={Boolean(erledigt[gebiet.id])} onChange={() => setErledigt((aktuell) => ({ ...aktuell, [gebiet.id]: !aktuell[gebiet.id] }))} /><i aria-hidden="true">✓</i><span><strong>{gebiet.name}</strong>{gebiet.hinweis && <small>{gebiet.hinweis}</small>}</span><b>Lv. {gebiet.level}</b></label>)}</div></section></div>
+        })()}
+        <p className="encounter-hinweis">Hinweis: Bereiche mit Angeln und Surfen können eine große Levelspanne haben. Ob Wasser und Gras als getrennte Begegnungen zählen, richtet sich nach eurem SoulLink-Regelwerk.</p>
       </section>
     </main>
   )
@@ -2437,28 +2628,31 @@ function Regeln({ zurueck }: { zurueck: () => void }) {
 function Pokedex({ zurueck }: { zurueck: () => void }) {
   const [suche, setSuche] = useState('')
   const [ausgewaehlt, setAusgewaehlt] = useState<number | null>(null)
+  const [umfang, setUmfang] = useState<'kanto' | 'national'>('kanto')
 
   const gefiltert = useMemo(() => {
     const begriff = suchText(suche.trim().replace(/^#/, ''))
-    if (!begriff) return POKEMON
-    return POKEMON.filter(
+    const pool = umfang === 'kanto' ? POKEMON.slice(0, 151) : POKEMON
+    if (!begriff) return pool
+    return pool.filter(
       (pokemon) =>
         suchText(pokemon.name).includes(begriff) ||
         String(pokemon.id).includes(begriff) ||
         suchText(pokemon.genus).includes(begriff),
     )
-  }, [suche])
+  }, [suche, umfang])
 
   return (
     <main className="pokedex-seite">
       <header className="pokedex-kopf">
         <button className="zurueck" onClick={zurueck}>← Startseite</button>
-        <span className="edition">NATIONALER POKÉDEX · 001–386</span>
+        <span className="edition">{umfang === 'kanto' ? 'KANTO-POKÉDEX · 001–151' : 'NATIONALER POKÉDEX · 001–386'}</span>
         <h1>Pokédex</h1>
-        <p>Alle Pokémon der ersten drei Generationen – mit Daten aus Feuerrot und Blattgrün.</p>
+        <p>{umfang === 'kanto' ? 'Die ursprünglichen 151 Pokémon aus Kanto.' : 'Alle Pokémon der ersten drei Generationen – mit Daten aus Feuerrot und Blattgrün.'}</p>
       </header>
 
       <section className="pokedex-inhalt">
+        <div className="pokedex-umfang" role="group" aria-label="Pokédex auswählen"><button className={umfang === 'kanto' ? 'aktiv' : ''} onClick={() => setUmfang('kanto')}><span>151</span><strong>Kanto-Pokédex</strong><small>Generation I</small></button><button className={umfang === 'national' ? 'aktiv' : ''} onClick={() => setUmfang('national')}><span>386</span><strong>Nationaler Pokédex</strong><small>Generation I–III</small></button></div>
         <div className="suche">
           <span aria-hidden="true">⌕</span>
           <input
@@ -2496,6 +2690,278 @@ function Pokedex({ zurueck }: { zurueck: () => void }) {
   )
 }
 
+type DesignModus = 'hell' | 'dunkel'
+type BallLogo = 'poke' | 'super' | 'hyper' | 'meister' | 'premier'
+type DesignEinstellungen = {
+  modus: DesignModus
+  akzent: string
+  banner: string
+  ball: BallLogo
+}
+
+const EINSTELLUNGEN_SCHLUESSEL = 'feuerrot-einstellungen'
+const SPEICHER_PREFIX = 'feuerrot-'
+const RUN_ARCHIV_SCHLUESSEL = 'feuerrot-run-archiv'
+
+type RunArchiv = { id: string; archiviertAm: string; daten: Record<string, string> }
+
+function runArchiveLesen(): RunArchiv[] {
+  try { return JSON.parse(localStorage.getItem(RUN_ARCHIV_SCHLUESSEL) ?? '[]') as RunArchiv[] }
+  catch { return [] }
+}
+const AKZENTFARBEN = [
+  { name: 'Feuerrot', wert: '#d83b35', dunkel: '#a92323', weich: '#f9ded8' },
+  { name: 'Glutorange', wert: '#d76a24', dunkel: '#9e4718', weich: '#f8e3d4' },
+  { name: 'Ozeanblau', wert: '#2874a7', dunkel: '#1d547a', weich: '#d8e8f2' },
+  { name: 'Blattgrün', wert: '#378b61', dunkel: '#276647', weich: '#dcece4' },
+  { name: 'Lavendel', wert: '#7856a6', dunkel: '#573c7d', weich: '#e7dff0' },
+] as const
+const BANNERFARBEN = [
+  { name: 'Kantogrün', wert: '#1f5a45' },
+  { name: 'Feuerrot', wert: '#8f2f2c' },
+  { name: 'Nachtblau', wert: '#263f66' },
+  { name: 'Indigo', wert: '#493f73' },
+  { name: 'Aubergine', wert: '#633f55' },
+  { name: 'Anthrazit', wert: '#303a38' },
+] as const
+
+function einstellungenLesen(): DesignEinstellungen {
+  try {
+    const gespeichert = JSON.parse(localStorage.getItem(EINSTELLUNGEN_SCHLUESSEL) ?? '{}') as Partial<DesignEinstellungen>
+    const modus: DesignModus = gespeichert.modus === 'dunkel' ? 'dunkel' : 'hell'
+    const akzent = AKZENTFARBEN.some((farbe) => farbe.wert === gespeichert.akzent)
+      ? gespeichert.akzent as string
+      : AKZENTFARBEN[0].wert
+    const banner = BANNERFARBEN.some((farbe) => farbe.wert === gespeichert.banner)
+      ? gespeichert.banner as string
+      : BANNERFARBEN[0].wert
+    const ball: BallLogo = ['poke', 'super', 'hyper', 'meister', 'premier'].includes(gespeichert.ball ?? '') ? gespeichert.ball as BallLogo : 'poke'
+    return { modus, akzent, banner, ball }
+  } catch {
+    return { modus: 'hell', akzent: AKZENTFARBEN[0].wert, banner: BANNERFARBEN[0].wert, ball: 'poke' }
+  }
+}
+
+function RunArchivKarte({ run, nummer, standardOffen }: { run: RunArchiv; nummer: number; standardOffen: boolean }) {
+  const [register, setRegister] = useState<'lebend' | 'grabbox'>('lebend')
+  const [seite, setSeite] = useState(0)
+  let namen = { rot: 'Team Rot', blau: 'Team Blau' }
+  let counter = { rot: 0, blau: 0 }
+  let grabbox: GrabPaar[] = []
+  let lebendePaare: PokemonPaar[] = []
+  try { namen = JSON.parse(run.daten['feuerrot-teamplaner-namen'] ?? '{}') as typeof namen } catch { /* alte Daten */ }
+  try { counter = JSON.parse(run.daten['feuerrot-death-counter'] ?? '{}') as typeof counter } catch { /* alte Daten */ }
+  try { grabbox = JSON.parse(run.daten['feuerrot-grabbox'] ?? '[]') as GrabPaar[] } catch { /* alte Daten */ }
+  try { lebendePaare = JSON.parse(run.daten['feuerrot-teamplaner-paare'] ?? '[]') as PokemonPaar[] } catch { /* alte Daten */ }
+  const fortschritt = Number(run.daten['feuerrot-arenen-fortschritt'])
+  const fortschrittName = Number.isInteger(fortschritt) && ARENEN_FORTSCHRITT[fortschritt] ? ARENEN_FORTSCHRITT[fortschritt].name : 'Noch kein Orden gewählt'
+  const liste = register === 'lebend' ? lebendePaare : grabbox
+  const seiten = Math.max(1, Math.ceil(liste.length / 6))
+  const sichtbar = liste.slice(seite * 6, seite * 6 + 6)
+
+  function registerWaehlen(ziel: 'lebend' | 'grabbox') { setRegister(ziel); setSeite(0) }
+
+  return <details open={standardOffen}><summary><span>RUN {nummer}</span><div><strong>{fortschrittName}</strong><small>{new Date(run.archiviertAm).toLocaleString('de-DE')}</small></div><b>{lebendePaare.length} lebend · {grabbox.length} Grabbox</b></summary><div className="run-details"><div className="run-details__werte"><p><span>{namen.rot || 'Team Rot'}</span><strong>{counter.rot || 0} Tode</strong></p><p><span>{namen.blau || 'Team Blau'}</span><strong>{counter.blau || 0} Tode</strong></p></div><div className="run-register"><button className={register === 'lebend' ? 'aktiv' : ''} onClick={() => registerWaehlen('lebend')}>Lebende Paare <b>{lebendePaare.length}</b></button><button className={register === 'grabbox' ? 'aktiv' : ''} onClick={() => registerWaehlen('grabbox')}>Grabbox <b>{grabbox.length}</b></button></div>{sichtbar.length ? <div className={`run-pokemonliste ${register === 'grabbox' ? 'run-pokemonliste--grab' : ''}`}>{sichtbar.map((paar) => <article key={paar.id}><div><img src={BILD(paar.links)} alt="" /><span><small>{namen.rot || 'Team Rot'} · Lv. {paar.levelLinks}</small><strong>{POKEMON[paar.links - 1]?.name ?? 'Unbekannt'}</strong></span></div><b>{register === 'grabbox' ? '†' : '↔'}</b><div><span><small>{namen.blau || 'Team Blau'} · Lv. {paar.levelRechts}</small><strong>{POKEMON[paar.rechts - 1]?.name ?? 'Unbekannt'}</strong></span><img src={BILD(paar.rechts)} alt="" /></div>{register === 'lebend' && <em>{paar.aktiv ? `Team · Slot ${(paar.slot ?? 0) + 1}` : 'Ersatzbank'}</em>}</article>)}</div> : <p className="run-details__leer">In diesem Bereich sind keine Seelenpaare gespeichert.</p>}{seiten > 1 && <nav className="run-seiten" aria-label="Seite auswählen"><button onClick={() => setSeite((aktuell) => Math.max(0, aktuell - 1))} disabled={seite === 0}>←</button><span>Seite {seite + 1} von {seiten}</span><button onClick={() => setSeite((aktuell) => Math.min(seiten - 1, aktuell + 1))} disabled={seite === seiten - 1}>→</button></nav>}</div></details>
+}
+
+function EinstellungsMenue({
+  offen,
+  schliessen,
+  design,
+  designAendern,
+}: {
+  offen: boolean
+  schliessen: () => void
+  design: DesignEinstellungen
+  designAendern: (design: DesignEinstellungen) => void
+}) {
+  const dateiEingabe = useRef<HTMLInputElement>(null)
+  const [meldung, setMeldung] = useState('')
+  const [fehler, setFehler] = useState(false)
+  const [archivOffen, setArchivOffen] = useState(false)
+  const [archive, setArchive] = useState<RunArchiv[]>(runArchiveLesen)
+
+  function archivLeeren() {
+    if (!archive.length || !window.confirm('Alle archivierten Runs und Statistiken endgültig löschen? Der aktuelle Spielstand bleibt erhalten.')) return
+    localStorage.removeItem(RUN_ARCHIV_SCHLUESSEL)
+    setArchive([])
+  }
+
+  useEffect(() => {
+    if (!offen) return
+    const taste = (event: KeyboardEvent) => { if (event.key === 'Escape') archivOffen ? setArchivOffen(false) : schliessen() }
+    window.addEventListener('keydown', taste)
+    document.body.classList.add('menue-offen')
+    return () => {
+      window.removeEventListener('keydown', taste)
+      document.body.classList.remove('menue-offen')
+    }
+  }, [offen, schliessen, archivOffen])
+
+  function exportieren() {
+    const daten: Record<string, string> = {}
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const schluessel = localStorage.key(index)
+      if (schluessel?.startsWith(SPEICHER_PREFIX)) {
+        daten[schluessel] = localStorage.getItem(schluessel) ?? ''
+      }
+    }
+
+    const sicherung = {
+      format: 'soullink-feuerrot-spielstand',
+      version: 1,
+      exportiertAm: new Date().toISOString(),
+      daten,
+    }
+    const blob = new Blob([JSON.stringify(sicherung, null, 2)], { type: 'application/json' })
+    const adresse = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = adresse
+    link.download = `soullink-spielstand-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(adresse)
+    setFehler(false)
+    setMeldung(`${Object.keys(daten).length} Datenbereiche wurden gesichert.`)
+  }
+
+  async function importieren(datei: File) {
+    try {
+      const sicherung = JSON.parse(await datei.text()) as {
+        format?: unknown
+        version?: unknown
+        daten?: unknown
+      }
+      if (
+        sicherung.format !== 'soullink-feuerrot-spielstand'
+        || sicherung.version !== 1
+        || !sicherung.daten
+        || typeof sicherung.daten !== 'object'
+        || Array.isArray(sicherung.daten)
+      ) {
+        throw new Error('Diese Datei ist keine gültige SoulLink-Sicherung.')
+      }
+
+      const daten = Object.entries(sicherung.daten).filter(
+        (eintrag): eintrag is [string, string] => eintrag[0].startsWith(SPEICHER_PREFIX) && typeof eintrag[1] === 'string',
+      )
+      if (!daten.length) throw new Error('Die Sicherung enthält keinen Spielstand.')
+      if (!window.confirm('Der geladene Spielstand ersetzt die momentan gespeicherten App-Daten. Möchtest du fortfahren?')) {
+        setFehler(false)
+        setMeldung('Import abgebrochen. Dein aktueller Spielstand blieb unverändert.')
+        return
+      }
+
+      const vorhandeneSchluessel = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index))
+        .filter((schluessel): schluessel is string => Boolean(schluessel?.startsWith(SPEICHER_PREFIX)))
+      vorhandeneSchluessel.forEach((schluessel) => localStorage.removeItem(schluessel))
+      daten.forEach(([schluessel, wert]) => localStorage.setItem(schluessel, wert))
+      setFehler(false)
+      setMeldung('Spielstand wiederhergestellt. Die App wird neu geladen …')
+      window.setTimeout(() => window.location.reload(), 350)
+    } catch (error) {
+      setFehler(true)
+      setMeldung(error instanceof Error ? error.message : 'Die Sicherung konnte nicht geladen werden.')
+    } finally {
+      if (dateiEingabe.current) dateiEingabe.current.value = ''
+    }
+  }
+
+  if (!offen) return null
+
+  return (
+    <div className="menue-hintergrund" onMouseDown={schliessen} role="presentation">
+      <aside className="seitenmenue" role="dialog" aria-modal="true" aria-labelledby="einstellungen-titel" onMouseDown={(event) => event.stopPropagation()}>
+        <header>
+          <div>
+            <span>EINSTELLUNGEN</span>
+            <h2 id="einstellungen-titel">Deine App</h2>
+          </div>
+          <button className="seitenmenue__schliessen" onClick={schliessen} aria-label="Menü schließen">×</button>
+        </header>
+
+        <div className="seitenmenue__inhalt">
+          <section className="einstellung-gruppe">
+            <div className="einstellung-gruppe__kopf">
+              <span className="einstellung-symbol" aria-hidden="true">↧</span>
+              <div><h3>Spielstand</h3><p>Sichere alle Teams, Orden, Aufgaben und Einstellungen.</p></div>
+            </div>
+            <div className="sicherungs-aktionen">
+              <button className="sicherung-knopf sicherung-knopf--primaer" onClick={exportieren}><span>↓</span><strong>Spielstand sichern</strong><small>JSON-Datei herunterladen</small></button>
+              <button className="sicherung-knopf" onClick={() => dateiEingabe.current?.click()}><span>↑</span><strong>Spielstand laden</strong><small>Sicherung wiederherstellen</small></button>
+              <input
+                ref={dateiEingabe}
+                className="datei-eingabe"
+                type="file"
+                accept="application/json,.json"
+                onChange={(event) => {
+                  const datei = event.target.files?.[0]
+                  if (datei) void importieren(datei)
+                }}
+              />
+            </div>
+            {meldung && <p className={`einstellung-meldung ${fehler ? 'einstellung-meldung--fehler' : ''}`} role="status">{meldung}</p>}
+          </section>
+
+          <section className="einstellung-gruppe run-archiv">
+            <div className="einstellung-gruppe__kopf">
+              <span className="einstellung-symbol" aria-hidden="true">◷</span>
+              <div><h3>Alte Runs</h3><p>Sieh dir automatisch archivierte Challenges an.</p></div>
+            </div>
+            <button className="run-archiv-knopf" onClick={() => setArchivOffen(true)}><span>◷</span><strong>Alte Runs ansehen</strong><small>{archive.length ? `${archive.length} archivierte Challenge${archive.length === 1 ? '' : 's'}` : 'Noch kein Run archiviert'}</small><b>→</b></button>
+          </section>
+
+          <section className="einstellung-gruppe">
+            <div className="einstellung-gruppe__kopf">
+              <span className="einstellung-symbol" aria-hidden="true">◐</span>
+              <div><h3>Darstellung</h3><p>Das Design gilt sofort in allen Bereichen.</p></div>
+            </div>
+            <span className="einstellung-label">MODUS</span>
+            <div className="modus-auswahl">
+              <button className={design.modus === 'hell' ? 'aktiv' : ''} onClick={() => designAendern({ ...design, modus: 'hell' })}><span>☀</span> Hell</button>
+              <button className={design.modus === 'dunkel' ? 'aktiv' : ''} onClick={() => designAendern({ ...design, modus: 'dunkel' })}><span>☾</span> Dunkel</button>
+            </div>
+            <span className="einstellung-label">AKZENTFARBE</span>
+            <div className="farb-auswahl">
+              {AKZENTFARBEN.map((farbe) => (
+                <button
+                  className={design.akzent === farbe.wert ? 'aktiv' : ''}
+                  key={farbe.wert}
+                  onClick={() => designAendern({ ...design, akzent: farbe.wert })}
+                  aria-label={`${farbe.name} auswählen`}
+                  title={farbe.name}
+                >
+                  <i style={{ backgroundColor: farbe.wert }} />
+                  <span>{farbe.name}</span>
+                </button>
+              ))}
+            </div>
+            <span className="einstellung-label">STARTSEITEN-BANNER</span>
+            <div className="farb-auswahl banner-auswahl">
+              {BANNERFARBEN.map((farbe) => (
+                <button
+                  className={design.banner === farbe.wert ? 'aktiv' : ''}
+                  key={farbe.wert}
+                  onClick={() => designAendern({ ...design, banner: farbe.wert })}
+                  aria-label={`${farbe.name} als Bannerfarbe auswählen`}
+                  title={farbe.name}
+                >
+                  <i style={{ backgroundColor: farbe.wert }} />
+                  <span>{farbe.name}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <p className="speicher-hinweis"><strong>Automatische Speicherung aktiv</strong><span>Änderungen werden weiterhin direkt in diesem Browser gespeichert. Die Datei ist dein zusätzliches Backup.</span></p>
+        </div>
+      </aside>
+      {archivOffen && <div className="run-dialog-hintergrund" onMouseDown={() => setArchivOffen(false)}><section className="run-dialog" role="dialog" aria-modal="true" aria-labelledby="run-dialog-titel" onMouseDown={(event) => event.stopPropagation()}><header><div><span>CHALLENGE-ARCHIV</span><h2 id="run-dialog-titel">Alte Runs</h2><p>Teams, Fortschritt und Verluste vergangener Versuche.</p></div><div className="run-dialog__aktionen"><button className="run-statistik-reset" onClick={archivLeeren} disabled={!archive.length}>Statistiken zurücksetzen</button><button onClick={() => setArchivOffen(false)} aria-label="Alte Runs schließen">×</button></div></header>{archive.length ? <div className="run-dialog__liste">{archive.map((run, index) => <RunArchivKarte key={run.id} run={run} nummer={archive.length - index} standardOffen={index === 0} />)}</div> : <div className="run-dialog__leer"><span>◷</span><h3>Noch keine alten Runs</h3><p>Beim Zurücksetzen einer Challenge wird der aktuelle Stand automatisch hier archiviert.</p></div>}</section></div>}
+    </div>
+  )
+}
+
 export default function App() {
   type Seite = 'start' | 'pokedex' | 'teamplaner' | 'kampfberater' | 'regeln' | 'begegnungen' | 'begegnungstracker' | 'capwaechter'
 
@@ -2511,6 +2977,20 @@ export default function App() {
   }
 
   const [seite, setSeite] = useState<Seite>(seiteAusHash)
+  const [menueOffen, setMenueOffen] = useState(false)
+  const [ballAuswahlOffen, setBallAuswahlOffen] = useState(false)
+  const [design, setDesign] = useState<DesignEinstellungen>(einstellungenLesen)
+
+  useEffect(() => {
+    const farbe = AKZENTFARBEN.find((eintrag) => eintrag.wert === design.akzent) ?? AKZENTFARBEN[0]
+    document.documentElement.dataset.theme = design.modus === 'dunkel' ? 'dark' : 'light'
+    document.documentElement.dataset.ball = design.ball
+    document.documentElement.style.setProperty('--rot', farbe.wert)
+    document.documentElement.style.setProperty('--rot-dunkel', farbe.dunkel)
+    document.documentElement.style.setProperty('--akzent-weich', farbe.weich)
+    document.documentElement.style.setProperty('--banner', design.banner)
+    localStorage.setItem(EINSTELLUNGEN_SCHLUESSEL, JSON.stringify(design))
+  }, [design])
 
   useEffect(() => {
     const wechsel = () => setSeite(seiteAusHash())
@@ -2519,28 +2999,60 @@ export default function App() {
   }, [])
 
   function wechseln(ziel: Seite) {
+    setMenueOffen(false)
     window.location.hash = ziel === 'start' ? '' : ziel
     setSeite(ziel)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  function challengeZuruecksetzen() {
+    if (!window.confirm('Möchtest du die aktuelle Challenge wirklich zurücksetzen? Der jetzige Stand wird vorher unter „Alte Runs“ archiviert.')) return
+    if (!window.confirm('Letzte Bestätigung: Teams, Orden, Aufgaben und Encounter werden auf einen neuen Run zurückgesetzt. Fortfahren?')) return
+
+    const daten: Record<string, string> = {}
+    const schluessel = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index))
+      .filter((eintrag): eintrag is string => Boolean(eintrag?.startsWith(SPEICHER_PREFIX)))
+      .filter((eintrag) => eintrag !== RUN_ARCHIV_SCHLUESSEL && eintrag !== EINSTELLUNGEN_SCHLUESSEL)
+    schluessel.forEach((eintrag) => { daten[eintrag] = localStorage.getItem(eintrag) ?? '' })
+
+    const archive = runArchiveLesen()
+    archive.unshift({ id: `${Date.now()}`, archiviertAm: new Date().toISOString(), daten })
+    schluessel.forEach((eintrag) => localStorage.removeItem(eintrag))
+    localStorage.setItem(RUN_ARCHIV_SCHLUESSEL, JSON.stringify(archive.slice(0, 10)))
+    window.location.hash = ''
+    window.location.reload()
+  }
+
   return (
     <div className="app">
-      <nav className="hauptnav">
-        <button className="marke" onClick={() => wechseln('start')} aria-label="Zur Startseite">
-          <span className="marke__ball"><i /></span>
-          <span><strong>Feuerrot</strong><small>Abenteuer-Begleiter</small></span>
-        </button>
+      {seite !== 'start' && <nav className="hauptnav">
+        <div className="hauptnav__links">
+          <button className="menue-knopf" onClick={() => setMenueOffen(true)} aria-label="Einstellungen öffnen" aria-expanded={menueOffen}>
+            <i /><i /><i />
+          </button>
+          <button className="marke" onClick={() => wechseln('start')} aria-label="Zur Startseite">
+            <span className="marke__ball" role="button" tabIndex={0} onClick={(event) => { event.stopPropagation(); setBallAuswahlOffen(true) }}><i /></span>
+            <span><strong>Feuerrot</strong><small>Abenteuer-Begleiter</small></span>
+          </button>
+        </div>
         <span className="datenhinweis">Daten: PokéAPI · Fanprojekt</span>
-      </nav>
+      </nav>}
+
+      <EinstellungsMenue offen={menueOffen} schliessen={() => setMenueOffen(false)} design={design} designAendern={setDesign} />
+      {ballAuswahlOffen && <div className="ball-dialog-hintergrund" onMouseDown={() => setBallAuswahlOffen(false)}><section className="ball-dialog" role="dialog" aria-modal="true" aria-labelledby="ball-dialog-titel" onMouseDown={(event) => event.stopPropagation()}><header><div><span>LOGO AUSWÄHLEN</span><h2 id="ball-dialog-titel">Dein Pokéball</h2></div><button onClick={() => setBallAuswahlOffen(false)} aria-label="Auswahl schließen">×</button></header><div>{([{ id: 'poke', name: 'Pokéball' }, { id: 'super', name: 'Superball' }, { id: 'hyper', name: 'Hyperball' }, { id: 'meister', name: 'Meisterball' }, { id: 'premier', name: 'Premierball' }] as { id: BallLogo; name: string }[]).map((ball) => <button className={design.ball === ball.id ? 'aktiv' : ''} data-vorschau-ball={ball.id} key={ball.id} onClick={() => { setDesign({ ...design, ball: ball.id }); setBallAuswahlOffen(false) }}><span className="ball-vorschau"><i /></span><strong>{ball.name}</strong></button>)}</div></section></div>}
 
       {seite === 'start' && (
         <Startseite
+          menueOeffnen={() => setMenueOffen(true)}
+          menueOffen={menueOffen}
+          logoAuswahlOeffnen={() => setBallAuswahlOffen(true)}
           pokedexOeffnen={() => wechseln('pokedex')}
           teamplanerOeffnen={() => wechseln('teamplaner')}
           kampfberaterOeffnen={() => wechseln('kampfberater')}
           regelnOeffnen={() => wechseln('regeln')}
+          encounterOeffnen={() => wechseln('begegnungstracker')}
           abenteuerplanOeffnen={() => wechseln('begegnungen')}
+          challengeZuruecksetzen={challengeZuruecksetzen}
         />
       )}
       {seite === 'pokedex' && <Pokedex zurueck={() => wechseln('start')} />}

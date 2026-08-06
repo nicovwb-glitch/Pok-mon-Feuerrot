@@ -8,6 +8,8 @@
   text-rendering: optimizeLegibility;
   --rot: #d83b35;
   --rot-dunkel: #a92323;
+  --akzent-weich: #f9ded8;
+  --banner: #1f5a45;
   --gruen: #1f5a45;
   --gruen-hell: #dbe8df;
   --creme: #f6f3ea;
@@ -27,3 +29,15 @@ button:focus-visible, input:focus-visible { outline: 3px solid #f0a936; outline-
 a { color: inherit; }
 img { display: block; max-width: 100%; }
 #root { min-height: 100vh; }
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --gruen: #173d31;
+  --gruen-hell: #233e34;
+  --creme: #111713;
+  --papier: #1b241f;
+  --tinte: #edf3ef;
+  --grau: #aab5ae;
+  --linie: #39453e;
+  --schatten: 0 18px 50px rgba(0, 0, 0, .38);
+}
