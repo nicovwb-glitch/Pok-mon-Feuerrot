@@ -1,0 +1,14 @@
+{
+  "name": "Feuerrot Abenteuer-Begleiter",
+  "short_name": "Feuerrot",
+  "description": "Pokédex, Teamplaner und SoulLink-Begleiter für Pokémon Feuerrot",
+  "lang": "de",
+  "start_url": "/Pok-mon-Feuerrot/",
+  "scope": "/Pok-mon-Feuerrot/",
+  "display": "standalone",
+  "background_color": "#17211c",
+  "theme_color": "#8f2f2c",
+  "icons": [
+    { "src": "pokeball-app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
